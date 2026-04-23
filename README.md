@@ -131,6 +131,8 @@ Then, lets install some dependencies
 (for Debian based Linux distribution):
 
 ```bash
+sudo apt upgrade
+sudo apt update
 sudo apt install wget git                        # needed to retrieve the EPICS base, modules/supports, etc
 sudo apt install build-essential libreadline-dev # EPICS base dependencies
 ```
@@ -361,8 +363,29 @@ cd /opt/epics/tops/workshopTop/workshopExampleApp/Db/
 touch workshopExample.db
 ```
 
-And edit the `/opt/epics/tops/workshopTop/workshopExampleApp/Db/Makefile` file,
-in order to add the following line: `DB += workshopExample.db`.
+And edit the `/opt/epics/tops/workshopTop/workshopExampleApp/Db/Makefile` file like so:
+
+```diff
+  ...
+  TOP=../..
+  include $(TOP)/configure/CONFIG
+  #----------------------------------------
+  #  ADD MACRO DEFINITIONS AFTER THIS LINE
+  
+  #----------------------------------------------------
+  # Create and install (or just install) into <top>/db
+  # databases, templates, substitutions like this
+  #DB += xxx.db
++ DB += workshopExample.db
+  
+  #----------------------------------------------------
+  # If <anyname>.db template is not named <anyname>*.template add
+  # <anyname>_template = <templatename>
+  
+  include $(TOP)/configure/RULES
+  #----------------------------------------
+  #  ADD RULES AFTER THIS LINE
+```
 
 Now, let's build our Top, and let's see what changed:
 
@@ -395,7 +418,7 @@ tree .
 │   └── RULES_TOP                    # ...
 │
 ├── db                               # IOC database directory (built after running `make`)
-│   └── workshopExample.dbd          ## IOC default database file (see a below section for more details about it)
+│   └── workshopExample.db           ## IOC default database file (see a below section for more details about it)
 │                                    ## ⚠️ A common mistake is to edit this file instead of the one inside ./workshopExampleApp/Db/
 │
 ├── dbd                              # IOC database definition directory (built after running `make`)
@@ -446,11 +469,6 @@ then you might want a record to represent the open/close state.
 *A database is just a collection of records*.
 
 An IOC can load one or more databases.
-
-ℹ️ Note:
-> An EPICS template file (`.template`) is just like a `.db` file, 
-> but have macros that **needs** to be replaced, usually with a `.substitutions` file.
-> We will talk later about macros and `.substitutions` files in more details.
 
 A Record is an object with:
 
@@ -513,7 +531,7 @@ PV = record_name + "." + field_name
 
 A DataBase Definition file is an EPICS “configuration” file
 containing any sort of definitions except for record definitions
-(like found in the `.db` and `.template` files).
+(like found in the `.db` file).
 
 A file containing record instances should never contain any of the other definitions and vice-versa.
 
@@ -643,7 +661,8 @@ record(ai, "workshop-example:analog-input-test"){
     field(VAL, "12.34") # "value", initial value you might want to set when starting the IOC
 
     ## Fields specifying where this record will READ the analog value on the device
-    ## (this will be covered in the next workshop about StreamDevice    ## for your first communication with a device)
+    ## (this will be covered in the next workshop about StreamDevice    
+    ## for your first communication with a device)
     #field(DTYP, "device_type...")
     #field(INP, "@device_communication_protocol(port_number, address, timeout, ...)")
 
@@ -753,7 +772,7 @@ record(ao, "workshop-example:calc-avg-test"){
 ```
 
 ℹ️ Note:
-> At the end of every input link (like `INP` field), output link (like `OUT` field) and forward link (like `FLNK` field),
+> At the end of every input link (e.g. `INP` field), output link (e.g. `OUT` field) and forward link (e.g. `FLNK` field),
 > you can add some link "options" in orther to further specify inter-records behavior.
 >
 > Those link options might concern severity:
@@ -788,7 +807,12 @@ make clean && make && echo OK || echo KO
 You can check the file `/opt/epics/tops/workshopTop/db/workshopExample.db`,
 it should have been updated with our latest modifications.
 
-Now, let's add `dbLoadRecords("${TOP}/db/workshopExample.db")`
+Now, let's add the following line:
+
+```
+dbLoadRecords("${TOP}/db/workshopExample.db")
+```
+
 to our `st.cmd` file (`/opt/epics/tops/workshopTop/iocBoot/iocWorkshopExample/st.cmd`).
 
 The `st.cmd` file might end up like shown bellow:
@@ -808,6 +832,27 @@ dbLoadRecords("${TOP}/db/workshopExample.db")
 iocInit
 
 ```
+
+## What is Channel Access (CA)?
+
+Channel Access (CA) is the default communication protocol used between EPICS servers (i.e. IOCs)
+and EPICS clients (i.e. HMI monitoring tools, archiving softwares, alarms systems, etc).
+It is mostly used to share PVs information across a network.
+CA will optionally use UDP to initiate a client-server communication,
+and then use TCP for the rest of the communication.
+
+See <https://docs.epics-controls.org/en/latest/specs/ca_protocol.html> for more details about CA.
+
+## What is PV Access (PVA)?
+
+PV Access (PVA) is the “new” communication protocol used between EPICS servers (i.e. IOCs)
+and EPICS clients (i.e. HMI monitoring tools, archiving softwares, alarms systems, etc).
+It is mostly used to share PVs information across a network (like CA),
+but it also encompasses a structured data encoding referred to as PV Data.
+
+See <https://epics-controls.org/resources-and-support/documents/pvaccess/>
+and <https://epics-controls.org/resources-and-support/documents/pvaccess/>
+for more details about PVA
 
 ## Basic CA client interaction
 
@@ -980,7 +1025,7 @@ INTF_ADDR_LIST : 0.0.0.0
   of a `.substitutions` file for more details.
 
 As an example,
-let's create a simple template file `/opt/epics/tops/workshopTop/workshopExampleApp/Db/workshopExample.db`:
+let's create a simple `.template` file `/opt/epics/tops/workshopTop/workshopExampleApp/Db/workshopExample.db`:
 
 ```
 record(bi, "${PREFIX}:${DEVICE-NAME}:workshop-example:bi-test"){
@@ -1012,8 +1057,30 @@ record(bo, "${PREFIX}:${DEVICE-NAME}:workshop-example:bo-test"){
 }
 ```
 
-Don't forget to add it to the database Makefile `/opt/epics/tops/workshopTop/workshopExampleApp/Db/Makefile` 
-by adding the following line: `DB += workshopExample.template`.
+Don't forget to add it to the database Makefile `/opt/epics/tops/workshopTop/workshopExampleApp/Db/Makefile` like so:
+
+```diff
+  ...
+  TOP=../..
+  include $(TOP)/configure/CONFIG
+  #----------------------------------------
+  #  ADD MACRO DEFINITIONS AFTER THIS LINE
+  
+  #----------------------------------------------------
+  # Create and install (or just install) into <top>/db
+  # databases, templates, substitutions like this
+  #DB += xxx.db
+  DB += workshopExample.db
++ DB += workshopExample.template
+  
+  #----------------------------------------------------
+  # If <anyname>.db template is not named <anyname>*.template add
+  # <anyname>_template = <templatename>
+  
+  include $(TOP)/configure/RULES
+  #----------------------------------------
+  #  ADD RULES AFTER THIS LINE
+```
 
 Then let's rebuild the Top:
 ```bash
@@ -1041,8 +1108,17 @@ file "${TOP}/db/workshopExample.template"
 }
 ```
 
-And add it to your `st.cmd` like so: `dbLoadTemplate("${TOP}/iocBoot/${IOC}/workshopExample.substitutions")`
+And add it to your `st.cmd` like so:
 
+```diff 
+  ...
+
+  ## Load record instances
+  dbLoadRecords("${TOP}/db/workshopExample.db")
++ dbLoadTemplate("${TOP}/iocBoot/${IOC}/workshopExample.substitutions")
+
+  iocInit
+```
 
 Now when you run your IOC:
 
@@ -1053,6 +1129,617 @@ cd /opt/epics/tops/workshopTop/iocBoot/iocWorkshopExample/
 
 You should see all your new PVs.
 
+## How to use `sub` and `asub` record types?
+
+The `sub` record type allows to directly call some specific C or C++ code.
+The `aSub` record type is a variant of the `sub` record type,
+allowing to also output data with multiple fields.
+
+See
+<https://docs.epics-controls.org/projects/base/en/latest/subRecord.html>
+and <https://docs.epics-controls.org/projects/base/en/latest/aSubRecord.html>
+for more details about those record types.
+
+Let's create the followng `.db` file
+(`/opt/epics/tops/workshopTop/workshopExampleApp/Db/workshopExampleForSubAndASub.db`) 
+in order to showcase how to use a `sub` record and a `aSub` record:
+
+```
+record(ai,"workshop-example:ai-for-sub-asub-example")
+{
+    field(DESC, "some dummy ai")
+    field(VAL, "12.34")
+}
+
+record(sub,"workshop-example:sub-example")
+{
+    field(INAM, "mySubInit") # name of the C function executed only once at IOC init
+    field(SNAM, "mySubProcess") # name of the C function executed every time this record is processed
+}
+
+record(aSub,"workshop-example:asub-example")
+{
+    field(INAM, "myASubInit") # name of the C function executed only once at IOC init
+    field(SNAM, "myASubProcess") # name of the C function executed every time this record is processed
+
+    field(INPA, "workshop-example:ai-for-sub-asub-example CP")
+    field(NOA, "1") # capacity (number of elements) of input A (that might be more than 1 for arrays)
+    field(FTA, "DOUBLE") # type of input A
+
+    field(OUTA, "workshop-example:ao-for-sub-asub-example")
+    field(NOVA, "1") # capacity (number of elements) of output A (that might be more than 1 for arrays)
+    field(FTVA, "DOUBLE") # type of output A
+}
+
+record(ao,"workshop-example:ao-for-sub-asub-example")
+{
+    field(DESC, "some dummy ao")
+}
+```
+
+And let's add it to the associated `Db/Makefile`
+(i.e. `/opt/epics/tops/workshopTop/workshopExampleApp/Db/Makefile`):
+
+```diff
+  ...
+
+  TOP=../..
+  include $(TOP)/configure/CONFIG
+  #----------------------------------------
+  #  ADD MACRO DEFINITIONS AFTER THIS LINE
+  
+  #----------------------------------------------------
+  # Create and install (or just install) into <top>/db
+  # databases, templates, substitutions like this
+  #DB += xxx.db
+  DB += workshopExample.db
+  DB += workshopExample.template
++ DB += workshopExampleForSubAndASub.db
+
+  #----------------------------------------------------
+  # If <anyname>.db template is not named <anyname>*.template add
+  # <anyname>_template = <templatename>
+  
+  include $(TOP)/configure/RULES
+  #----------------------------------------
+  #  ADD RULES AFTER THIS LINE
+```
+
+Now let's create the C file 
+(`/opt/epics/tops/workshopTop/workshopExampleApp/src/workshopExampleForSubAndASub.c`),
+where our `sub` and `aSub` records will call their associated functions:
+
+```
+#include <stdio.h>
+
+#include <dbDefs.h>
+#include <registryFunction.h>
+#include <subRecord.h>
+#include <aSubRecord.h>
+#include <epicsExport.h>
+
+int mySubASubDebug;
+
+static long mySubInit(subRecord *precord)
+{
+    if (mySubASubDebug)
+        printf("Record %s called mySubInit(%p)\n",
+               precord->name, (void*) precord);
+    return 0;
+}
+
+static long mySubProcess(subRecord *precord)
+{
+    if (mySubASubDebug)
+        printf("Record %s called mySubProcess(%p)\n",
+               precord->name, (void*) precord);
+    return 0;
+}
+
+static long myASubInit(aSubRecord *precord)
+{
+    if (mySubASubDebug)
+        printf("Record %s called myASubInit(%p)\n",
+               precord->name, (void*) precord);
+    return 0;
+}
+
+static long myASubProcess(aSubRecord *precord)
+{
+    double* inpa = precord->a;
+    double outa = *inpa + 42;
+    *(double*) precord->vala = outa;
+
+    if (mySubASubDebug)
+    {
+        printf("Record %s called myASubProcess(%p)\n",
+               precord->name, (void*) precord);
+        printf("INPA value is %f\n", *inpa);
+        printf("OUTA value is %f\n", outa);
+    }
+
+    /*
+     * Same thing can be done with more input/output (B,C,D, etc), e.g. with B:
+     *
+     * double* inpb = precord->a;
+     * double outb = *inpb + 123;
+     * *(double*) precord->valb = outb;
+     *
+     */
+
+    return 0;
+}
+
+//Register these symbols for use by IOC code:
+
+epicsExportAddress(int, mySubASubDebug);
+epicsRegisterFunction(mySubInit);
+epicsRegisterFunction(mySubProcess);
+epicsRegisterFunction(myASubInit);
+epicsRegisterFunction(myASubProcess);
+```
+
+Then, create the associated `.dbd` file
+(`/opt/epics/tops/workshopTop/workshopExampleApp/src/workshopExampleForSubAndASub.dbd`):
+
+```
+variable(mySubASubDebug)
+function(mySubInit)
+function(mySubProcess)
+function(myASubInit)
+function(myASubProcess)
+```
+
+⚠️ Important:
+> The function name from the C file (`mySubInit`, `mySubProcess`, `myASubInit` and `myASubProcess`)
+> have to match those declared in the `workshopExampleForSubAndASub.dbd` file
+> and thoses declared in the `INAM` and `SNAM` fields
+> of the previously specified `workshopExampleForSubAndASub.db` file.
+
+Now let's update the `src/Makefile` accordingly
+(i.e. `/opt/epics/tops/workshopTop/workshopExampleApp/src/Makfile`):
+
+```diff
+  ...
+
+  # Add all the support libraries needed by this IOC
+  #workshopExample_LIBS += xxx
+  workshopExample_LIBS += qsrv
+  workshopExample_LIBS += $(EPICS_BASE_PVA_CORE_LIBS)
++ 
++ # Include dbd files and source files sub and aSub:
++ workshopExample_DBD += workshopExampleForSubAndASub.dbd
++ workshopExample_SRCS += workshopExampleForSubAndASub.c
+  
+  # workshopExample_registerRecordDeviceDriver.cpp derives from workshopExample.dbd
+  workshopExample_SRCS += workshopExample_registerRecordDeviceDriver.cpp
+  ...
+```
+
+Finally, update the `.cmd` file 
+(`opt/epics/tops/workshopTop/iocBoot/iocWorkshopExample/st.cmd`):
+
+```diff 
+  ...
+
+  ## Load record instances
+  dbLoadRecords("${TOP}/db/workshopExample.db")
+  dbLoadTemplate("${TOP}/iocBoot/${IOC}/workshopExample.substitutions")
++ dbLoadRecords("${TOP}/db/workshopExampleForSubAndASub.db")
+
+  iocInit
+```
+
+And run the IOC:
+
+```bash
+cd /opt/epics/tops/workshopTop/iocBoot/iocWorkshopExample/
+./st.cmd
+```
+
+Once in the IOC Shell,
+if you run `var mySubASubDebug 1`,
+and run `dbpf workshop-example:ai-for-sub-asub-example 123`,
+then you will see the `printf` messages implemented in the previous C code.
+After that, if you run `dbpr workshop-example:ao-for-sub-asub-example`,
+then you will see that a new value has indeed been injected by your C code.
+
+ℹ️ Note:
+> An interesting alternative to `sub` and `aSub` records 
+> is [PyDevice](https://github.com/klemenv/PyDevice/)
+> which allow to call Python code instead of C or C++ code.
+
+## How to import a support module?
+
+First let's create a location to store all our support modules:
+```bash
+cd /opt/epics/
+mkdir support
+```
+
+### Asyn example
+
+As an example,
+let's import [Asyn](https://epics-modules.github.io/asyn/),
+which is used to interface IOCs with devices
+(i.e. come up with communication protocols that will allow your IOCs to talk to your devices).
+
+#### Install Asyn
+
+The first thing we can notice
+when looking at the [Asyn source code](https://github.com/epics-modules/asyn),
+is that Asyn is a Top,
+like any other support module.
+
+So let's download it, configure it and build it:
+
+```bash
+cd /opt/epics/support
+git clone https://github.com/epics-modules/asyn.git asyn-4.45
+ln -s asyn-4.45 asyn
+cd asyn-4.45
+git checkout R4.45 # checkout to the latest tagged version of asyn (latest asyn version at the time of writing)
+```
+
+Add the following `/opt/epics/support/asyn/configure/RELEASE.local` configuration file
+(whose content will override the one of the `RELEASE` file,
+without having to modify it directly,
+in order to specify the needed dependencies):
+```
+SUPPORT=/opt/epics/support
+EPICS_BASE=/opt/epics/base
+```
+
+Install some dependencies
+(for RPC support,
+e.g. needed for [VXI-11](https://epics-modules.github.io/asyn/asynDriver.html#vxi-11) communication):
+
+```bash
+sudo apt install rpcsvc-proto libtirpc-common libtirpc-dev
+```
+
+Then build asyn:
+
+```bash
+cd /opt/epics/support/asyn-4.45
+make clean && make && echo OK || echo KO
+```
+
+#### Import Asyn
+
+Let's import Asyn into our workshopTop.
+
+First, let's change directory to the workshopTop:
+
+```bash
+cd /opt/epics/tops/workshopTop
+```
+
+Then, edit the `/opt/epics/tops/workshopTop/configre/RELEASE`,
+in order to add the following:
+```diff
+  ...
+  # Variables and paths to dependent modules:
+  #MODULES = /path/to/modules
+  #MYMODULE = $(MODULES)/my-module
++ SUPPORT = /opt/epics/support
++ ASYN = ${SUPPORT}/asyn-4.45
+  ...
+```
+
+Also, edit the `/opt/epics/tops/workshopTop/workshopExampleApp/src/Makefile`,
+in order to add the following:
+
+``` diff
+  ...
+  # Include dbd files from all support applications:
+  #workshopExample_DBD += xxx.dbd
+  workshopExample_DBD += PVAServerRegister.dbd
+  workshopExample_DBD += qsrv.dbd
++ workshopExample_DBD += asyn.dbd
++ workshopExample_DBD += drvAsynIPPort.dbd
++ workshopExample_DBD += drvAsynSerialPort.dbd
++ #workshopExample_DBD += drv<...>.dbd
+
+  # Add all the support libraries needed by this IOC
+  #workshopExample_LIBS += xxx
+  workshopExample_LIBS += qsrv
+  workshopExample_LIBS += $(EPICS_BASE_PVA_CORE_LIBS)
++ workshopExample_LIBS += asyn
+  ...
+```
+
+Then re-build your Top:
+```bash
+cd /opt/epics/tops/workshopTop
+make clean && make && echo OK || echo KO
+```
+
+Asyn is now properly imported!
+
+### StreamDevice example
+
+As an other example,
+let's import [StreamDevice](https://paulscherrerinstitute.github.io/StreamDevice/)
+which is also a top (Asyn-based),
+and allow your IOC to communicate whith your device,
+if your device use any string based communication protocol.
+
+#### Install StreamDevice 
+
+Something we can notice
+when looking at the [StreamDevice source code](https://github.com/paulscherrerinstitute/StreamDevice),
+is that StreamDevice is also a Top,
+like any other support module.
+
+So let's download it, configure it and build it:
+
+```bash
+cd /opt/epics/support
+git clone https://github.com/paulscherrerinstitute/StreamDevice.git streamdevice-2.8.26
+ln -s streamdevice-2.8.26 streamdevice
+cd streamdevice-2.8.26 
+git checkout 2.8.26 # checkout to the latest tagged version of StreamDevice (latest asyn version at the time of writing)
+```
+
+Add the following `/opt/epics/support/streamdevice/configure/RELEASE.local` configuration file
+(whose content will override the one of the `RELEASE` file,
+without having to modify it directly,
+in order to specify the needed dependencies):
+```
+SUPPORT=/opt/epics/support
+ASYN=${SUPPORT}/asyn
+undefine CALC # no need for CALC support in this workshop
+undefine PCRE # no need for PCRE support in this workshop
+EPICS_BASE=/opt/epics/base
+```
+
+Then build StreamDevice:
+
+```bash
+cd /opt/epics/support/streamdevice-2.8.26
+make clean && make && echo OK || echo KO
+```
+
+#### Import StreamDevice
+
+Let's import StreamDevice into our workshopTop.
+
+First, let's change directory to the workshopTop:
+
+```bash
+cd /opt/epics/tops/workshopTop
+```
+
+Then, edit the `/opt/epics/tops/workshopTop/configre/RELEASE`,
+in order to add the following:
+```diff
+  ...
+  # Variables and paths to dependent modules:
+  #MODULES = /path/to/modules
+  #MYMODULE = $(MODULES)/my-module
+  SUPPORT = /opt/epics/support
+  ASYN = ${SUPPORT}/asyn-4.45
++ STREAMDEVICE = ${SUPPORT}/streamdevice-2.8.26
+  ...
+```
+
+Also, edit the `/opt/epics/tops/workshopTop/workshopExampleApp/src/Makefile`,
+in order to add the following:
+
+``` diff
+  ...
+  # Include dbd files from all support applications:
+  #workshopExample_DBD += xxx.dbd
+  workshopExample_DBD += PVAServerRegister.dbd
+  workshopExample_DBD += qsrv.dbd
+  workshopExample_DBD += asyn.dbd
+  workshopExample_DBD += drvAsynIPPort.dbd
+  workshopExample_DBD += drvAsynSerialPort.dbd
+  #workshopExample_DBD += drv<...>.dbd
+  workshopExample_DBD += stream.dbd
+
+  # Add all the support libraries needed by this IOC
+  #workshopExample_LIBS += xxx
+  workshopExample_LIBS += qsrv
+  workshopExample_LIBS += $(EPICS_BASE_PVA_CORE_LIBS)
+  workshopExample_LIBS += asyn
++ workshopExample_LIBS += stream
+  ...
+```
+
+Then re-build your Top:
+```bash
+cd /opt/epics/tops/workshopTop
+make clean && make && echo OK || echo KO
+```
+
+StreamDevice is now properly imported!
+
+### How to allow his own Top to be imported, like a support module, by another Top?
+
+ℹ️ Note:
+> By “allowing his own Top to be imported,”
+> I mean the ability to generate a library that allows you to reuse the code from your Top.
+> This is the recommended best practice when you want to call a Top from another.
+
+When you create a Top,
+the logic described in its App(s) is not "exportable" by default.
+Therefore, you will not be able to import it from another Top.
+
+To allow your Top to be imported,
+you will have to edit the `Makefile` file of the App `src` directory.
+(i.e. `/opt/epics/tops/workshopTop/workshopExampleApp/src/Makefile`)
+like so:
+
+``` diff
+  ...
+
+  TOP=../..
+  
+  include $(TOP)/configure/CONFIG
+  #----------------------------------------
+  #  ADD MACRO DEFINITIONS AFTER THIS LINE
+  #=============================
+  
+  #=============================
+  # Build the IOC application
+  
+  PROD_IOC = workshopExample
+  # workshopExample.dbd will be created and installed
+  DBD += workshopExample.dbd
+  
+  # workshopExample.dbd will be made up from these files:
+  workshopExample_DBD += base.dbd
+  
+  # Include dbd files from all support applications:
+  #workshopExample_DBD += xxx.dbd
+  workshopExample_DBD += PVAServerRegister.dbd
+  workshopExample_DBD += qsrv.dbd
+  workshopExample_DBD += asyn.dbd
+  workshopExample_DBD += drvAsynIPPort.dbd
+  workshopExample_DBD += drvAsynSerialPort.dbd
+  #workshopExample_DBD += drv<...>.dbd
+  workshopExample_DBD += stream.dbd
+  
+  # Add all the support libraries needed by this IOC
+  #workshopExample_LIBS += xxx
+  workshopExample_LIBS += qsrv
+  workshopExample_LIBS += $(EPICS_BASE_PVA_CORE_LIBS)
+  workshopExample_LIBS += asyn
+  workshopExample_LIBS += stream
+
+  # Include dbd files and source files sub and aSub:
+  workshopExample_DBD += workshopExampleForSubAndASub.dbd
+  workshopExample_SRCS += workshopExampleForSubAndASub.c
+  
+  # workshopExample_registerRecordDeviceDriver.cpp derives from workshopExample.dbd
+  workshopExample_SRCS += workshopExample_registerRecordDeviceDriver.cpp
+  
+  # Build the main IOC entry point on workstation OSs.
+  workshopExample_SRCS_DEFAULT += workshopExampleMain.cpp
+  workshopExample_SRCS_vxWorks += -nil-
+  
+  # Add support from base/src/vxWorks if needed
+  #workshopExample_OBJS_vxWorks += $(EPICS_BASE_BIN)/vxComLibrary
+  
+  # Finally link to the EPICS Base libraries
+  workshopExample_LIBS += $(EPICS_BASE_IOC_LIBS)
+
++ #===========================
++ # Build support/module application
++
++ # Include menu redefinition for other Tops to use it:
++ # (if any)
++ #DBDINC += menuScan # e.g. menuScan redefinition if any
++
++ # Create and install workshopExampleSupport.dbd:
++ DBD += workshopExampleSupport.dbd
++
++ # Build an IOC support/module library
++ LIBRARY_IOC += workshopExampleSupport
++
++ # Include dbd files for sub and aSub records:
++ # (if any)
++ #workshopExampleSupport_DBD += subASubRecords.dbd
++ workshopExampleSupport_DBD += workshopExampleForSubAndASub.dbd
++ 
++ # Include header files:
++ # (if any)
++ #workshopExampleSupport_INC += utilities.h
++
++ # Compile and add code to the support/module library
++ # (if any)
++ workshopExampleSupport_SRCS += workshopExample_registerRecordDeviceDriver.cpp
++ #workshopExampleSupport_SRCS += fooSubRecord.c
++ #workshopExampleSupport_SRCS += fooASubRecord.c
++ workshopExampleSupport_SRCS += workshopExampleForSubAndASub.c
++
++ # Finally link to the EPICS Base libraries
++ workshopExampleSupport_LIBS += $(EPICS_BASE_IOC_LIBS)
++
+  #===========================
+
+  include $(TOP)/configure/RULES
+  #----------------------------------------
+  #  ADD RULES AFTER THIS LINE
+```
+
+Then re-build your Top:
+
+```bash
+cd /opt/epics/tops/workshopTop
+make clean && make && echo OK || echo KO
+```
+
+Now, if you check the `lib` folder of your Top,
+you some new files (libraries) in it:
+
+```bash
+$ cd /opt/epics/tops/workshopTop
+$ tree lib
+
+  lib
+  └── linux-x86_64
+      ├── libworkshopExampleSupport.a
+      └── libworkshopExampleSupport.so
+```
+
+You Top can now properly be exported/imported!
+
+ℹ️ Note:
+> If your Top has no App but just a Sup directory 
+> (i.e. your Top is juste meant to be exported/imported),
+> then you can skip the whole `# Build the IOC application` of your `src/Makefile`
+> and remove it altogether.
+
+From now on,
+an other Top can import the workshopTop
+just like shown with Asyn or StreamDevice in previous sections.
+I.e. you would have to install the workshopTop in the `/opt/epics/support/` directory,
+and build it against the local epics-base,
+then you would to import it from your other Top by adding the workshopTop to the `configure/RELEASE` file
+e.g. like so:
+
+```diff
+  # Variables and paths to dependent modules:
+  #MODULES = /path/to/modules
+  #MYMODULE = $(MODULES)/my-module
++ SUPPORT = /opt/epics/support
++ WORKSHOPEXAMPLE = ${SUPPORT}/workshopTop
+  
+  # If using the sequencer, point SNCSEQ at its top directory:
+  #SNCSEQ = $(MODULES)/seq-ver
+  
+  # EPICS_BASE should appear last so earlier modules can override stuff:
+  EPICS_BASE = /opt/epics/base-7.0.10
+  
+  # Set RULES here if you want to use build rules from somewhere
+  # other than EPICS_BASE:
+  #RULES = $(MODULES)/build-rules
+  
+  # These lines allow developers to override these RELEASE settings
+  # without having to modify this file directly.
+  -include $(TOP)/../RELEASE.local
+  -include $(TOP)/../RELEASE.$(EPICS_HOST_ARCH).local
+  -include $(TOP)/configure/RELEASE.local
+```
+
+and by modifying the `<...>App/src/Makefile` e.g. like so:
+
+```diff
+  ...
+  # Include dbd files from all support applications:
+  #<...>_DBD += xxx.dbd
++ <...>_DBD += workshopExampleSupport.dbd
+  
+  # Add all the support libraries needed by this IOC
+  #<...>_LIBS += xxx
++ <...>_LIBS += workshopExampleSupport
+  ...
+```
+
+
 ---
 
 ## Bonus
@@ -1061,39 +1748,39 @@ You should see all your new PVs.
 
 ```
 sudo apt install re2c                                                         # SEQ module dependency (for SNL sequencing)
-sudo apt install rpcsvc-proto libtirpc-common                                 # Asyn module dependencies
 sudo dnf install xorg-x11-proto-devel libX11-devel libXext-devel libusb-devel # Area Detector dependencies
 ```
 
+### How to overcharge a record
+
+using the `*` record "type"
+
+🚧 TODO 🚧
+
 ### How to import a support module (e.g. SNL)?
 
-🚧
+🚧 TODO 🚧
 
 <https://epics-modules.github.io/sequencer/Installation.html>
 
 ### How to use SNL?
 
-🚧
+🚧 TODO 🚧
 
 <https://epics-modules.github.io/sequencer/>
 
-### How to use `sub` and `asub` record types?
-
-🚧
-
-<https://docs.epics-controls.org/projects/base/en/latest/aSubRecord.html>
-
-### How to allow his own Top to be imported, like a support module, by another Top?
-
-🚧
 
 ### How to run multiple IOCs on the same computer?
 
-🚧
+🚧 TODO 🚧
 
 ### What is procServ, how to use it in order to run an IOC and how to include it in a SystemD service?
 
-🚧
+🚧 TODO 🚧
 
 <https://github.com/ralphlange/procServ>
+
+```bash
+sudo apt install procServ
+```
 
