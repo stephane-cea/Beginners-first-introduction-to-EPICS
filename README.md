@@ -1104,7 +1104,7 @@ global
 
 file "${TOP}/db/workshopExample.template"
 {
-    pattern {DEVICE-NAME, DEVICE-TYPE, PORT-NUMBER, ${ADDRESS}, ${TIMEOUT}}
+    pattern {DEVICE-NAME, DEVICE-TYPE, PORT-NUMBER, ADDRESS, TIMEOUT}
             {valve1, valve, 12345, 67890, 999}
             {valve2, valve, 54321, 09876, 999}
             {valve3, valve, 11111, 22222, 999}
