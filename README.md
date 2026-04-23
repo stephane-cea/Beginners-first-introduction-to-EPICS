@@ -25,7 +25,7 @@ from scratch.
 
 An EPICS IOC is the centerpiece of EPICS:
 On one side, an IOC will communicate with one (or more) device(s), 
-think of equipement like power supply unit, motors, solenoid valves, etc.
+think of equipment like power supply unit, motors, solenoid valves, etc.
 On the other side,
 an IOC will communicate with its clients.
 So an IOC will forward commands from the clients to the devices,
@@ -175,7 +175,7 @@ ln -s base-7.0.10 base
 Export it to the `PATH`,
 by editing `$HOME/.bashrc` 
 (or `.profile`, `.zshrc`, `.zshenv`, etc)
-and adding the folling line at the end of this file:
+and adding the following line at the end of this file:
 
 ```bash
 export EPICS_BASE=/opt/epics/base
@@ -218,7 +218,7 @@ Here is a simplistic diagram illustrating how an IOC integrates into the EPICS e
 In this diagram, on the right side (device side),
 the IOC will communicate with one (or more) device(s), 
 think of industrial equipment like power supply unit, motors, solenoid valves, etc.
-It will communicate with that equipement using the communication protocol used by the device.
+It will communicate with that equipment using the communication protocol used by the device.
 
 In this diagram, on the left side (client side),
 the IOC will communicate with its clients,
@@ -246,7 +246,7 @@ Examples:
   then the device convert it into a human readable value and assign it to a PV
   which will be transmitted it to every subscribed EPICS client(s) over CA and/or PVA.
 
-Those PVs are specified by the IOC developper (you!) in the IOC database
+Those PVs are specified by the IOC developer (you!) in the IOC database
 (more about it in a following section).
 
 Note that an IOC can also exists without any associated device,
@@ -330,14 +330,14 @@ tree .
 │   ├── Makefile                     ## EPICS generated Makefile to build and manage configuration files
 │   ├── RELEASE                      ## EPICS configuration file for base and external support modules location
 │   ├── RULES                        ## EPICS configuration file including the appropriate rules configuration file
-│   ├── RULES.ioc                    ## EPICS build configuration file of the iocBoot/ sub-directorie(s)
+│   ├── RULES.ioc                    ## EPICS build configuration file of the iocBoot/ sub-directory(s)
 │   ├── RULES_DIRS                   ## EPICS build configuration file of each sub-directory
 │   └── RULES_TOP                    ## EPICS configuration specific to a Top
 │                                    ## see https://web.archive.org/web/20260324124203/https://docs.epics-controls.org/en/latest/build-system/specifications.html#configuration-files
 │
 ├── iocBoot                          # EPICS generated directory used to run IOC programs with the intended configuration
 │   │
-│   ├── Makefile                     ## EPICS generated Makefile to build and manage iocBoot/ sub-directorie(s)
+│   ├── Makefile                     ## EPICS generated Makefile to build and manage iocBoot/ sub-directory(s)
 │   │
 │   └── iocWorkshopExample           ## EPICS generated iocBoot sub-directory used to run a specific IOC program
 │       │
@@ -442,10 +442,10 @@ tree .
     ├── Db                           # ...
     │   ├── Makefile                 # ...
     │   │                            # ...
-    │   ├── O.Common                 ### Build artefacts
-    │   │   └── ...                  ### Build artefacts
-    │   ├── O.linux-x86_64           ### Build artefacts
-    │   │   └── ...                  ### Build artefacts
+    │   ├── O.Common                 ### Build artifacts
+    │   │   └── ...                  ### Build artifacts
+    │   ├── O.linux-x86_64           ### Build artifacts
+    │   │   └── ...                  ### Build artifacts
     │   │                            # ...
     │   └── workshopExample.db       ## IOC database file (see a below section for more details about it)
     │                                # ...
@@ -453,10 +453,10 @@ tree .
     └── src                          # ...
         ├── Makefile                 # ...
         │                            # ...
-        ├── O.Common                 ### Build artefacts
-        │   └── ...                  ### Build artefacts
-        ├── O.linux-x86_64           ### Build artefacts
-        │   └── ...                  ### Build artefacts
+        ├── O.Common                 ### Build artifacts
+        │   └── ...                  ### Build artifacts
+        ├── O.linux-x86_64           ### Build artifacts
+        │   └── ...                  ### Build artifacts
         │                            # ...
         └── workshopExampleMain.cpp  # ...
 ```
@@ -527,7 +527,7 @@ PV = record_name + "." + field_name
 ```
 
 ℹ️ Note:
-> If the `field_name` is not provided when adressing a PV,
+> If the `field_name` is not provided when addressing a PV,
 > by default the field `VAL` will be used (containing the value).
 
 ## What is an EPICS database definition (`.dbd`) file?
@@ -588,7 +588,7 @@ of the `st.cmd` file:
     passing the content of the `.cmd` file as the first argument.
     This is known as a [Shebang](wikipedia:Shebang_(Unix)).
     Note that the content of this `.cmd` file
-    is a script written with a dedicated EPICS script langage
+    is a script written with a dedicated EPICS script language
     called IOC Shell (`iocsh`).
 
 * ```{code} bash
@@ -606,7 +606,7 @@ of the `st.cmd` file:
     in the `iocBoot` directory of the Top
     (with the `${IOC}` environment variable),
     the location of the EPICS base,
-    and the location of support modules (other Tops imported for their functionnalities)
+    and the location of support modules (other Tops imported for their functionalities)
     specified in the `/opt/epics/tops/workshopTop/configure/RELEASE` file.
 
 * ```{code} bash
@@ -678,7 +678,7 @@ record(ao, "workshop-example:analog-output-test"){
     field(DESC, "some temperature")
 
     field(VAL, "43.21") # "value", initial value you might want to set when starting the IOC
-    field(PINI, "YES")  # "process at initialisation", specify to process the record (NO by default) when starting the IOC. Be carefull, when in a output record type, this will write on the device when the IOC starts (something we rarelly want)
+    field(PINI, "YES")  # "process at initialisation", specify to process the record (NO by default) when starting the IOC. Be careful, when in a output record type, this will write on the device when the IOC starts (something we rarely want)
 
     ## Fields specifying where this record will READ the analog value on the device
     ## (this will be covered in the next workshop about StreamDevice
@@ -776,7 +776,7 @@ record(ao, "workshop-example:calc-avg-test"){
 
 ℹ️ Note:
 > At the end of every input link (e.g. `INP` field), output link (e.g. `OUT` field) and forward link (e.g. `FLNK` field),
-> you can add some link "options" in orther to further specify inter-records behavior.
+> you can add some link "options" in other to further specify inter-records behavior.
 >
 > Those link options might concern severity:
 >
@@ -868,7 +868,7 @@ for more details about PVA
 
 - Check for errors in the terminal output (there should be none).
 
-- You should be greated with the `epics>` shell prompt.
+- You should be greeted with the `epics>` shell prompt.
   In this shell, you can run:
   - `dbl` to get a list of your PVs;
   - `dbpr <pv-name>` to print the value of a PV;
@@ -907,7 +907,7 @@ for more details about PVA
   - `cainfo -h`, for more details about the `cainfo` command (see also <https://docs.epics-controls.org/projects/base/en/latest/cainfo.html>)
 
   - `catime <pv-name>`, in order to perform a CA performance test
-  - `catime -h`, for more details about the `catime` command (see also <https://docs.epics-controls.org/projects/base/en/latest/catime.html>)
+  - `catime`, for more details about the `catime` command (see also <https://docs.epics-controls.org/projects/base/en/latest/catime.html>)
 
   - See <https://docs.epics-controls.org/projects/base/en/latest/ca-cli.html> for all available CA command-line 
     (provided by the EPICS base we installed earlier).
@@ -957,16 +957,15 @@ for example:
 
 ```
 epics> pvasr
-VERSION : pvAccess Server v6.0.0-SNAPSHOT
-PROVIDER_NAMES : QSRV,
-BEACON_ADDR_LIST :
-AUTO_BEACON_ADDR_LIST : 1
-BEACON_PERIOD : 15
-BROADCAST_PORT : 5076
-SERVER_PORT : 5075
-RCV_BUFFER_SIZE : 16384
-IGNORE_ADDR_LIST:
-INTF_ADDR_LIST : 0.0.0.0
+pvAccess Server v7.1.8
+Active configuration (w/ defaults)
+EPICS_PVAS_INTF_ADDR_LIST = 0.0.0.0:5075
+EPICS_PVAS_BEACON_ADDR_LIST = 
+EPICS_PVAS_AUTO_BEACON_ADDR_LIST = YES
+EPICS_PVAS_BEACON_PERIOD = 15
+EPICS_PVAS_BROADCAST_PORT = 5076
+EPICS_PVAS_SERVER_PORT = 5075
+EPICS_PVAS_PROVIDER_NAMES = QSRV
 ```
 
 - Open a new terminal.
@@ -1028,7 +1027,7 @@ INTF_ADDR_LIST : 0.0.0.0
   of a `.substitutions` file for more details.
 
 As an example,
-let's create a simple `.template` file `/opt/epics/tops/workshopTop/workshopExampleApp/Db/workshopExample.db`:
+let's create a simple `.template` file `/opt/epics/tops/workshopTop/workshopExampleApp/Db/workshopExample.template`:
 
 ```
 record(bi, "${PREFIX}:${DEVICE-NAME}:workshop-example:bi-test"){
@@ -1786,4 +1785,3 @@ using the `*` record "type"
 ```bash
 sudo apt install procServ
 ```
-
