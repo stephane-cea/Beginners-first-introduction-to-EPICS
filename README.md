@@ -104,7 +104,7 @@ This EPICS base installation method is the same regardless of the EPICS version 
 In this guide,
 EPICS `7` will be installed
 (the latest stable version at the time of writing this guide,
-which is the recommanded one).
+which is the recommended one).
 
 ### Create the `epics` group and install EPICS base dependencies
 
