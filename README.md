@@ -916,7 +916,7 @@ for more details about PVA
 
 ℹ️ Note:
 > All those commands act as Channel Access clients
-> (similar to other cliens like Phoebus, archiving systems, alarm systems, etc).
+> (similar to other clients like Phoebus, archiving systems, alarm systems, etc).
 
 ## Basic PVA client interaction
 
