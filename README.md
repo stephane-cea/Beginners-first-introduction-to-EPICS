@@ -1006,7 +1006,7 @@ INTF_ADDR_LIST : 0.0.0.0
 
 ℹ️ Note:
 > All those commands act as PV Access clients
-> (similar to other cliens like Phoebus, archiving systems, alarm systems, etc).
+> (similar to other clients like Phoebus, archiving systems, alarm systems, etc).
 
 ## What are macros, `.template` files and `.substitutions` files
 
