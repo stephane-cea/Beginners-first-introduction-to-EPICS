@@ -131,11 +131,14 @@ Then, lets install some dependencies
 (for Debian based Linux distribution):
 
 ```bash
-sudo apt upgrade
 sudo apt update
-sudo apt install wget git                        # needed to retrieve the EPICS base, modules/supports, etc
-sudo apt install build-essential libreadline-dev # EPICS base dependencies
+sudo apt upgrade -y
+sudo apt install -y wget git                        # needed to retrieve the EPICS base, modules/supports, etc
+sudo apt install -y build-essential libreadline-dev # EPICS base dependencies
 ```
+
+> Don't worry if you see some `apt` errors or warnings,
+> this codespace related and still kinda works somehow.
 
 Side note: for Redhat based Linux distribution,
 see <https://docs.epics-controls.org/en/latest/getting-started/linux-packages.html>.
@@ -150,7 +153,7 @@ sudo chown root:epics /opt/epics && sudo chmod 775 /opt/epics
 sudo chmod g+s /opt/epics # set setgid bit for files and directories under /opt/epics to inherit group rights
 ```
 
-The last commands are usefull because it apply the group rights (`epics`) to `/opt/epics`,
+The last commands are useful because it apply the group rights (`epics`) to `/opt/epics`,
 and specify that every file or directory created in `/opt/epics` will automatically inherit those group rights
 (so we won't have to bother owner and group rights anymore).
 
