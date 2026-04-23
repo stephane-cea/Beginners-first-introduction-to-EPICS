@@ -243,7 +243,7 @@ Examples:
   That PV is kept updated by the IOC so that it reflects the associated value on the device.
   So, the device reports a value,
   and the IOC parses the value from the device,
-  than the device convert it into a human readable value and assign it to a PV
+  then the device convert it into a human readable value and assign it to a PV
   which will be transmitted it to every subscribed EPICS client(s) over CA and/or PVA.
 
 Those PVs are specified by the IOC developper (you!) in the IOC database
