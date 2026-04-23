@@ -465,7 +465,7 @@ tree .
 
 Records are the building blocks of EPICS IOCs.
 They are usually associated to a value on some device.
-E.g. a solenoid valve will hold a value stating if the valve is open or close,
+E.g. a solenoid valve will hold a value stating if the valve is opened or closed,
 if your IOC is communicating with that valve,
 then you might want a record to represent the open/close state.
 
