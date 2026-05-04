@@ -4,18 +4,19 @@
 
 EPICS stands for **E**xperimental **P**hysics and **I**ndustrial **C**ontrol **S**ystem.
 EPICS is a set of software tools and applications.
-This set provides a software infrastructure for use in building distributed control systems 
+This set provides a software infrastructure for use in building distributed control systems
 in order to operate devices such as particle accelerators,
 large experiments and major telescopes.
 Such distributed control systems typically comprise tens or even hundreds of computers,
 networked together to allow communication between them
-and to provide control and feedback of the various parts of the device (generaly from a control room).
+and to provide control and feedback of the various parts of the device
+(generally from a control room).
 
 ## Intro
 
-This workshop will take the form of a demonstration,
+This workshop will take the form of a tutorial,
 and this document will serve as a guide.
-Hopefully, anyone should be able to reproduce the demonstration using this document.
+Hopefully, anyone should be able to reproduce the tutorial using this document.
 
 EPICS concepts will be introduced as we go.
 
@@ -24,8 +25,8 @@ This guide will show how to create and run an EPICS IOC
 from scratch.
 
 An EPICS IOC is the centerpiece of EPICS:
-On one side, an IOC will communicate with one (or more) device(s), 
-think of equipement like power supply unit, motors, solenoid valves, etc.
+On one side, an IOC will communicate with one (or more) device(s),
+think of equipment like power supply unit, motors, solenoid valves, etc.
 On the other side,
 an IOC will communicate with its clients.
 So an IOC will forward commands from the clients to the devices,
@@ -45,6 +46,7 @@ nor specific to any particular work method that might be found in some instituti
 - ⭐️ <https://docs.epics-controls.org>
 - ⭐️ <https://docs.epics-controls.org/projects/base/en/latest/ComponentReference.html>
 - ⭐️ <https://epics-extensions.github.io/EPNix/nixos-25.11/glossary.html>
+- ⭐️ <https://epics.anl.gov/tech-talk/>
 - <https://docs.epics-controls.org/projects/how-tos/en/latest/getting-started/installation.html>
 - <https://docs.epics-controls.org/en/latest/appdevguide/gettingStarted.html?highlight=Shell#chap:IOCShell>
 - <https://epics.anl.gov/index.php>
@@ -52,24 +54,84 @@ nor specific to any particular work method that might be found in some instituti
 - <https://epics.anl.gov/modules/index.php>
 - <https://epics.anl.gov/extensions/index.php>
 - <https://epics.anl.gov/download/index.php>
-- <https://epics.anl.gov/tech-talk/index.php>
 - <https://epics.anl.gov/docs/training.php>
 
-##  Prerequisites
+## Prerequisites
 
 - A [Github](https://github.com/) account
+- Alternatively, [docker](https://www.docker.com/) if you don't want to use [Github Codespaces](https://github.com/features/codespaces)
 
-## Setup on Linux
+## Preliminary considerations
+
+In this tutorial you'll come across commands to run in a terminal.
+Those commands will be shown like so:
+
+```bash
+command-to-run
+```
+
+You will also come across some files to modify.
+To do so, you'll have to edit them with the tool of your choice,
+e.g. in the terminal with `nano` or `vim` (for example),
+or directly with the Github Codespaces interface
+(which is somewhat easier and is the recommended method if you're not really into system administration stuff).
+
+When asked to edit a file,
+you will have to either create some new text, delete some existing text, or both.
+Those editions will be shown like so:
+
+```diff
+  ...
+  some content above the line to add
+  (this content provides context to help locate the text to be edited)
+
++ line-to-create
+  
+  some content below the line to add
+  (this content provides context to help locate the text to be edited)
+  ...
+```
+
+```diff
+  ...
+  some content above the line to delete
+  (this content provides context to help locate the text to be edited)
+
+- line-to-delete
+  
+  some content below the line to delete
+  (this content provides context to help locate the text to be edited)
+  ...
+```
+
+```diff
+  ...
+  some content above the line to delete
+  (this content provides context to help locate the text to be edited)
+
+- line-to-delete
++ line-to-create
+  
+  some content below the line to create
+  (this content provides context to help locate the text to be edited)
+  ...
+```
+
+⚠️ Warning:
+> The `+` and `-` symbols are not part of the text to be edited.
+> Do NOT copy those symbols.
+> They are just here to indicate what kind of editing is expected.
+
+## Environment setup
 
 First, let's setup our work environment.
 For this, we will use [Github codespaces](https://github.com/codespaces):
 
-- Go to <https://github.com/codespaces> 
+- Go to <https://github.com/codespaces>
 - Login with your github account
 - Click "Use this template" under the "Blank" template
 - Wait a few seconds for the environment to load
-- Maximize the "TERMINAL" view,
-  every command in this guide will have to be executed in this terminal
+- *Every command in this guide will have to be executed in the terminal view*
 - `cat /etc/os-release` should return :
 
   ```console
@@ -85,16 +147,77 @@ For this, we will use [Github codespaces](https://github.com/codespaces):
 
 So,
 what we should read here is that our work environment is on Linux
-(using a Linux distribution called Ubuntu, based on Debian).
+(using a Linux distribution called [Ubuntu](https://ubuntu.com/), based on [Debian](https://www.debian.org/)).
 
-This is a common OS for EPICS development,
+This is a common OS for Linux beginners and for EPICS development in general,
 so this guide will focus on this one.
 
-ℹ️ Keep in mind that Windows or MacOS can also be used for EPICS.
-See the below documentation for more details about this:
-- <https://docs.epics-controls.org/en/latest/getting-started/installation-linux.html>
-- <https://docs.epics-controls.org/en/latest/getting-started/installation-windows.html>
-- <https://docs.epics-controls.org/en/latest/getting-started/os-specifics.html>
+ℹ️ Note:
+> Keep in mind that Windows or MacOS can also be used for EPICS.
+> See the below documentation for more details about this:
+>
+> - <https://docs.epics-controls.org/en/latest/getting-started/installation-linux.html>
+> - <https://docs.epics-controls.org/en/latest/getting-started/installation-windows.html>
+> - <https://docs.epics-controls.org/en/latest/getting-started/os-specifics.html>
+
+### Alternative setup with docker
+
+Unfortunately, Github Codespaces isn't very fast (just a few cores)
+and comes with a monthly usage limitation (unless you pay for more).
+
+If you want more resources and no usage limitation,
+then you can setup a docker container, e.g. like so:
+
+```bash
+docker pull ubuntu:noble
+docker run --interactive --tty --name ubuntu-epics-formation ubuntu-noble
+```
+
+ℹ️ Note:
+> Later, you will be able to stop this container with `docker stop ubuntu-epics-formation`.
+>
+> If you want to find it back and run it again (resuming where you left):
+>
+> ```bash
+> $ docker ps -a
+>   CONTAINER ID   IMAGE           COMMAND       CREATED        STATUS                    PORTS     NAMES
+>   abcdef123456   ubuntu:noble    "bash"        24 hours ago   Exited (0) 24 hours ago             ubuntu-epics-formation
+>
+> $ docker start ubuntu-epics-formation
+> $ docker attach ubuntu-epics-formation
+> ```
+
+Once inside your container, run:
+
+```bash
+docker$ apt install sudo vim nano
+```
+
+If the `USER` environment variable is empty,
+i.e. if `docker$ echo $USER` returns an empty sting,
+then export your user name (here `root`) it to the `USER` environment variable
+by editing the `$HOME/.bashrc` file
+(or `.profile`, `.zshrc`, `.zshenv`, etc)
+and adding the following line at the end of this file:
+
+```bash
+export USER=root
+```
+
+Apply this configuration by sourcing it:
+
+```bash
+source $HOME/.bashrc
+```
+
+Then you can then continue with the rest of the tutorial.
+
+ℹ️ Note:
+> Instead of using docker,
+> you can also use a VM with the hypervisor of your choice,
+> or use any other environment you prefer.
+> But in that case,
+> keep in mind that you may need to adapt some of the instructions to your environment.
 
 ## EPICS base
 
@@ -108,17 +231,8 @@ which is the recommended one).
 
 ### Create the `epics` group and install EPICS base dependencies
 
-The current user should be called `codespace`.
-
-The bellow command:
-
-```bash
-echo $USER
-```
-should return `codespace`.
-
-With that in mind,
-lets create an `epics` group and add the current user to this group:
+First, create an `epics` group
+(and add the current user, i.e. `$USER`, i.e. yourself, in it):
 
 ```bash
 sudo groupadd epics
@@ -127,8 +241,13 @@ newgrp epics
 groups
 ```
 
+ℹ️ Note:
+> Creating an `epics` group is *optional* but can arguably be considered a good sysadmin practice
+> (especially for systems with multiple users).
+> Ultimately, you can manage groups and permissions the way you want.
+
 Then, lets install some dependencies
-(for Debian based Linux distribution):
+(for Debian-based Linux distributions):
 
 ```bash
 sudo apt update
@@ -138,10 +257,12 @@ sudo apt install -y build-essential libreadline-dev # EPICS base dependencies
 ```
 
 > Don't worry if you see some `apt` errors or warnings,
-> this codespace related and still kinda works somehow.
+> this is Codespaces related and still kinda works somehow.
 
-Side note: for Redhat based Linux distribution,
-see <https://docs.epics-controls.org/en/latest/getting-started/linux-packages.html>.
+ℹ️ Side note:
+> For Redhat-based Linux distribution (which is also very common in the EPICS world),
+> see <https://docs.epics-controls.org/en/latest/getting-started/linux-packages.html>
+> to get the list of dependencies to install.
 
 ### Create the `/opt/epics` directory and install the EPICS base inside it
 
@@ -150,12 +271,22 @@ Let's create the `/opt/epics` directory:
 ```bash
 sudo mkdir /opt/epics
 sudo chown root:epics /opt/epics && sudo chmod 775 /opt/epics
-sudo chmod g+s /opt/epics # set setgid bit for files and directories under /opt/epics to inherit group rights
+sudo chmod g+s /opt/epics # set setgid bit for all files and directories under /opt/epics to automatically inherit group rights
 ```
 
+ℹ️ Note:
+> You can install the EPICS base wherever you want,
+> not necessarily in `/opt/epics`.
+> Feel free to use a different directory if you prefer.
+
 The last commands are useful because it apply the group rights (`epics`) to `/opt/epics`,
-and specify that every file or directory created in `/opt/epics` will automatically inherit those group rights
-(so we won't have to bother owner and group rights anymore).
+and specify that every file or directory created in `/opt/epics` will automatically inherit those group rights,
+so we won't have to bother owner and group rights anymore.
+
+ℹ️ Note:
+> Again, those group rights and permissions are optional,
+> we are using them in this tutorial because they are very convenient.
+> Ultimately, you can still manage groups and permissions the way you want.
 
 Now, let's download and build the EPICS base (`7`) from source.
 
@@ -172,10 +303,11 @@ rm base-7.0.10.tar.gz
 ln -s base-7.0.10 base
 ```
 
-Export it to the `PATH`,
-by editing `$HOME/.bashrc` 
-(or `.profile`, `.zshrc`, `.zshenv`, etc)
-and adding the folling line at the end of this file:
+Export it to your `PATH`
+(i.e. an environment variable used to help your Linux shell locates and executes commands),
+by editing `$HOME/.bashrc`
+(or `/etc/bash.bashrc` for system-wide configuration, or `.profile`, `.zshrc`, `.zshenv`, etc)
+and adding the following line at the end of this file:
 
 ```bash
 export EPICS_BASE=/opt/epics/base
@@ -193,7 +325,7 @@ Now, let's build the base:
 
 ```bash
 cd /opt/epics/base
-make clean && make && echo OK || echo KO # on github codespace, this command can take about 10-15 minutes to complete
+make clean && make && echo OK || echo KO # on Github Codespaces, this command can take about 10-15 minutes to complete
 ```
 
 While the base is compiling,
@@ -201,10 +333,9 @@ you can already start to read the next section ("What is an IOC"),
 and come back to check the build result afterwards.
 
 Now that the EPICS base is installed and built,
-let's shift our focus from the epics-base 
+let's shift our focus from the epics-base
 to the main topic of this workshop.
 So, let's move right on to the IOC.
-
 
 ## What is an IOC?
 
@@ -216,9 +347,9 @@ Here is a simplistic diagram illustrating how an IOC integrates into the EPICS e
 ![simple IOC diagram](./simple_ioc_diagram.png)
 
 In this diagram, on the right side (device side),
-the IOC will communicate with one (or more) device(s), 
-think of industrial equipment like power supply unit, motors, solenoid valves, etc.
-It will communicate with that equipement using the communication protocol used by the device.
+the IOC will communicate with one (or more) device(s),
+think of industrial equipments like power supply units, motors, solenoid valves, etc.
+It will communicate with that equipment using the communication protocol used by the device.
 
 In this diagram, on the left side (client side),
 the IOC will communicate with its clients,
@@ -246,7 +377,7 @@ Examples:
   then the device convert it into a human readable value and assign it to a PV
   which will be transmitted it to every subscribed EPICS client(s) over CA and/or PVA.
 
-Those PVs are specified by the IOC developper (you!) in the IOC database
+Those PVs are specified by the IOC developer (you!) in the IOC database
 (more about it in a following section).
 
 Note that an IOC can also exists without any associated device,
@@ -267,16 +398,18 @@ In this case, there is no device to communicate with, everything happens using C
 
 ```bash
 cd /opt/epics
-mkdir -p tops/workshopTop
+
+mkdir -p tops/workshopTop # create a directory for IOC development
 cd tops/workshopTop
+
 makeBaseApp.pl -t ioc workshopExample # create the Top and App
-makeBaseApp.pl -a linux-x86_64 -i -t ioc -p workshopExample WorkshopExample # create the iocBoot entry
+makeBaseApp.pl -a linux-x86_64 -i -t ioc -p workshopExample WorkshopExample # create the iocBoot sub-directory
 ```
 
 ## What is a Top?
 
-A Top refers to the root of a directory 
-(the “top” of the directory) — and its associated structure (i.e. sub-directories architecture) — 
+A Top refers to the root of a directory
+(the “top” of the directory) — and its associated structure (i.e. sub-directories architecture) —
 where you can actually perform IOC-specific development.
 
 Simply put, a Top is the project where you develop an IOC.
@@ -306,10 +439,11 @@ and contains by default two sub-directories:
 - The `src` sub-directory, containing the source code of your application.
 
 ℹ️ Side note:
-> Similar to an App, an EPICS Sup (also called support application) 
-> refers to another directory inside a Top (the name of that directory has to be suffixed with `Sup`). 
+> Similar to an App, an EPICS Sup (also called support application)
+> refers to another directory inside a Top
+> (the name of that directory has to be suffixed with `Sup`).
 > When compiling/building a Top, Sups are functionally the same as Apps,
-> but they are meant to be built before, in order to be used by Apps. 
+> but they are meant to be built before, in order to be used by Apps.
 > For example: the devOpcuaSup directory inside the [opcua Top](https://github.com/epics-modules/opcua/tree/master).
 
 ## IOC architecture
@@ -330,14 +464,14 @@ tree .
 │   ├── Makefile                     ## EPICS generated Makefile to build and manage configuration files
 │   ├── RELEASE                      ## EPICS configuration file for base and external support modules location
 │   ├── RULES                        ## EPICS configuration file including the appropriate rules configuration file
-│   ├── RULES.ioc                    ## EPICS build configuration file of the iocBoot/ sub-directorie(s)
+│   ├── RULES.ioc                    ## EPICS build configuration file of the iocBoot/ sub-directories
 │   ├── RULES_DIRS                   ## EPICS build configuration file of each sub-directory
 │   └── RULES_TOP                    ## EPICS configuration specific to a Top
 │                                    ## see https://web.archive.org/web/20260324124203/https://docs.epics-controls.org/en/latest/build-system/specifications.html#configuration-files
 │
 ├── iocBoot                          # EPICS generated directory used to run IOC programs with the intended configuration
 │   │
-│   ├── Makefile                     ## EPICS generated Makefile to build and manage iocBoot/ sub-directorie(s)
+│   ├── Makefile                     ## EPICS generated Makefile to build and manage iocBoot/ sub-directories
 │   │
 │   └── iocWorkshopExample           ## EPICS generated iocBoot sub-directory used to run a specific IOC program
 │       │
@@ -358,8 +492,9 @@ tree .
         └── workshopExampleMain.cpp  ### EPICS generated main source code file (starting point)
 ```
 
-We are expected to add a `.db` file (EPICS database file, see next section for more details about it),
-so let's add an emtpy one:
+We are expected to add a `.db` file
+(EPICS database file, see next section for more details about it),
+so let's add an empty one:
 
 ```bash
 cd /opt/epics/tops/workshopTop/workshopExampleApp/Db/
@@ -442,10 +577,10 @@ tree .
     ├── Db                           # ...
     │   ├── Makefile                 # ...
     │   │                            # ...
-    │   ├── O.Common                 ### Build artefacts
-    │   │   └── ...                  ### Build artefacts
-    │   ├── O.linux-x86_64           ### Build artefacts
-    │   │   └── ...                  ### Build artefacts
+    │   ├── O.Common                 ### Build artifacts
+    │   │   └── ...                  ### Build artifacts
+    │   ├── O.linux-x86_64           ### Build artifacts
+    │   │   └── ...                  ### Build artifacts
     │   │                            # ...
     │   └── workshopExample.db       ## IOC database file (see a below section for more details about it)
     │                                # ...
@@ -453,10 +588,10 @@ tree .
     └── src                          # ...
         ├── Makefile                 # ...
         │                            # ...
-        ├── O.Common                 ### Build artefacts
-        │   └── ...                  ### Build artefacts
-        ├── O.linux-x86_64           ### Build artefacts
-        │   └── ...                  ### Build artefacts
+        ├── O.Common                 ### Build artifacts
+        │   └── ...                  ### Build artifacts
+        ├── O.linux-x86_64           ### Build artifacts
+        │   └── ...                  ### Build artifacts
         │                            # ...
         └── workshopExampleMain.cpp  # ...
 ```
@@ -469,33 +604,33 @@ E.g. a solenoid valve will hold a value stating if the valve is opened or closed
 if your IOC is communicating with that valve,
 then you might want a record to represent the open/close state.
 
-*A database is just a collection of records*.
+*An EPICS database (`.db` file) is just a collection of records*.
 
 An IOC can load one or more databases.
 
 A Record is an object with:
 
-* A unique name;
-* A behavior defined by its type;
-* Controllable properties (**fields**) that further specify its behavior ;
-* Optional associated hardware I/O (device support);
-* Optional links to other records.
+- A unique name;
+- A behavior defined by its type;
+- Controllable properties (**fields**) that further specify its behavior ;
+- Optional associated hardware I/O (device support);
+- Optional links to other records.
 
 There are several different types of records available.
 For example, here are some very common records:
 
-* The [analog input](https://docs.epics-controls.org/projects/base/en/latest/aiRecord.html) 
+- The [analog input](https://docs.epics-controls.org/projects/base/en/latest/aiRecord.html)
   and [analog output](https://docs.epics-controls.org/projects/base/en/latest/aoRecord.html)
-  (ai and ao) types, 
-  are used to store an analog value, 
+  (ai and ao) types,
+  are used to store an analog value,
   and are typically used for things like temperatures, pressure, flow rates, etc.
-* The [binary input](https://docs.epics-controls.org/projects/base/en/latest/biRecord.html) 
+- The [binary input](https://docs.epics-controls.org/projects/base/en/latest/biRecord.html)
   and [binary output](https://docs.epics-controls.org/projects/base/en/latest/boRecord.html)
-  (bi and bo) types, 
-  are used to store a boolean value, 
+  (bi and bo) types,
+  are used to store a boolean value,
   and are generally used for commands and statuses to and from equipment,
   i.e. for values like On/Off, Open/Closed and so on.
-* The [calc](https://docs.epics-controls.org/projects/base/en/latest/calcRecord.html)
+- The [calc](https://docs.epics-controls.org/projects/base/en/latest/calcRecord.html)
   and [calcout](https://docs.epics-controls.org/projects/base/en/latest/calcoutRecord.html)
   records can access other records and perform a calculation based on their values.
   E.g. calculate the efficiency of a motor by a function of the current and voltage input and output,
@@ -522,12 +657,12 @@ which can be addressed using its unique PV name
 Now that we know what records are,
 a more formal definition of a PV would be:
 
-```
+```console
 PV = record_name + "." + field_name
 ```
 
 ℹ️ Note:
-> If the `field_name` is not provided when adressing a PV,
+> If the `field_name` is not provided when addressing a PV,
 > by default the field `VAL` will be used (containing the value).
 
 ## What is an EPICS database definition (`.dbd`) file?
@@ -544,54 +679,63 @@ The definitions covered by a `.dbd` file include
 Database definition files are not very beginner friendly and rarely used even for more advanced tasks.
 So we won't spend too much time on `.dbd` in this workshop.
 
+But if you ever want to learn more about database definitions,
+then see <https://docs.epics-controls.org/en/latest/appdevguide/databaseDefinition.html>
+to get started.
+
 ## How to run an IOC
 
 ```bash
 cd /opt/epics/tops/workshopTop/iocBoot/iocWorkshopExample/
 ```
 
-First method to run the IOC: make the `st.cmd` file executable, and run it:
+First method to run the IOC:
+make the `st.cmd` file executable, and run it:
+
 ```bash
 chmod +x st.cmd
 ./st.cmd
 ```
 
-Second method to run the IOC: run directly the IOC binary and passes the `st.cmd` file as an argument:
+Second method to run the IOC:
+run directly the IOC binary and passes the `st.cmd` file as an argument:
+
 ```bash
 ../../bin/linux-x86_64/workshopExample st.cmd
 ```
 
 In both cases, this should launch the IOC Shell.
 
+You can exit the IOC Shell by pressing the `Ctrl-D` keys,
+or by typing the `exit` command in the shell
+(you can do it now).
+
 ℹ️ Note:
 > The IOC Shell describes both the EPICS terminal shell which is launched after running an IOC,
-> and the EPICS script language used to interact with that terminal shell 
+> and the EPICS script language used to interact with that terminal shell
 > (which is also used in the `.cmd` file).
 > See <https://docs.epics-controls.org/en/latest/appdevguide/IOCShell.html> for more details.
-
-You can exit the IOC Shell by pressing the `Ctrl-C` keys,
-or by typing the `exit` command in the shell.
 
 Here is an explanation,
 line-by-line,
 of the `st.cmd` file:
 
-* ```{code} bash
+- ```{code} bash
   #!../../bin/linux-x86_64/workshopExample
   ```
 
     When the `.cmd` file is executable,
     it will instruct the program loader to run the `workshopExample` binary program
     relatively to the `.cmd` file
-    (i.e. located here: `../../bin/linux-x86_64/workshopExample`, 
+    (i.e. located here: `../../bin/linux-x86_64/workshopExample`,
     which means this absolute path: `/opt/epics/tops/workshopTop/bin/linux-x86_64/workshopExample`),
     passing the content of the `.cmd` file as the first argument.
     This is known as a [Shebang](wikipedia:Shebang_(Unix)).
     Note that the content of this `.cmd` file
-    is a script written with a dedicated EPICS script langage
+    is a script written with a dedicated EPICS script language
     called IOC Shell (`iocsh`).
 
-* ```{code} bash
+- ```{code} bash
   < envPaths
   ```
 
@@ -599,32 +743,33 @@ of the `st.cmd` file:
     next to the `.cmd` file
     (i.e. `/opt/epics/tops/workshopTop/iocBoot/iocWorkshopExample/envPaths`).
     The `envPaths` file is automatically generated at build time
+    (when running `make` at the root of the Top)
     and contains EPICS environment variables,
     specifying the location of the Top
     (with the `${TOP}` environment variable),
-    the location of the IOC program
+    the name of the IOC program
     in the `iocBoot` directory of the Top
     (with the `${IOC}` environment variable),
     the location of the EPICS base,
-    and the location of support modules (other Tops imported for their functionnalities)
+    and the location of support modules (other Tops imported for their functionalities)
     specified in the `/opt/epics/tops/workshopTop/configure/RELEASE` file.
 
-* ```{code} bash
+- ```{code} bash
   cd "${TOP}"
   ```
 
     Changes directory to the root of the Top,
-    i.e. `opt/epics/tops/workshopTop/`.
+    i.e. `/opt/epics/tops/workshopTop/`.
 
-* ```{code} bash
+- ```{code} bash
   dbLoadDatabase "dbd/workshopExample.dbd"
   ```
 
     Loads the default `workshopExample.dbd` file,
-    i.e. the [database definition file](https://docs.epics-controls.org/en/latest/appdevguide/databaseDefinition.html))
+    i.e. the [database definition file](https://docs.epics-controls.org/en/latest/appdevguide/databaseDefinition.html)
     generated at build time and located in the `/opt/epics/tops/workshopTop/dbd` directory.
 
-* ```{code} bash
+- ```{code} bash
   workshopExample_registerRecordDeviceDriver pdbbase
   ```
 
@@ -632,14 +777,13 @@ of the `st.cmd` file:
     see <https://docs.epics-controls.org/en/latest/build-system/specifications.html#registering-support-routines-for-expanded-database-definition-files>
     for more details.
 
-* ```{code} bash
+- ```{code} bash
   #dbLoadRecords("db/workshopExample.db","user=codespace")
   ```
 
   a commented line showing how to load an EPICS database file (`.db`).
   E.g. if we want to load our `.db` file,
   then we could replace this line with `dbLoadRecords("db/workshopExample.db")`.
-
 
 ℹ️ Note:
 > The IOC Shell scripting language allows two types of syntax when specifying instructions/commands/functions.
@@ -650,13 +794,25 @@ of the `st.cmd` file:
 
 ## How to work with an EPICS database?
 
-ℹ️ Reminder: every types and fields are documented here:
-<https://docs.epics-controls.org/projects/base/en/latest/ComponentReference.html>
+ℹ️ Note:
+> Every types and fields are documented here:
+> <https://docs.epics-controls.org/projects/base/en/latest/ComponentReference.html>
+> As a side-quest (maybe later after completing the tutorial, if you prefer),
+> I recommend you to take a look at this documentation
+> in order to discover some types and fields by yourself.
 
-Let's edit the `/opt/epics/tops/workshopTop/workshopExampleApp/Db/workshopExample.db` file,
+Let's edit the `/opt/epics/tops/workshopTop/workshopExampleApp/Db/workshopExample.db` file
+(which is currently empty),
 in order to add a few records:
 
-```
+ℹ️ Note:
+> Please take some time to read that file from start to finish,
+> it is thoroughly commented (in an EPICS database file, the control character for comments is `#`)
+> in order to explain it as much as possible.
+> It will showcase some of the most common record types and record fields
+> which is probably the most important part of this tutorial.
+
+```console
 record(ai, "workshop-example:analog-input-test"){
 
     field(DESC, "short desc under 40 chars") # "description", the 40 characters limit always feels like a challenge...
@@ -678,7 +834,7 @@ record(ao, "workshop-example:analog-output-test"){
     field(DESC, "some temperature")
 
     field(VAL, "43.21") # "value", initial value you might want to set when starting the IOC
-    field(PINI, "YES")  # "process at initialisation", specify to process the record (NO by default) when starting the IOC. Be carefull, when in a output record type, this will write on the device when the IOC starts (something we rarelly want)
+    field(PINI, "YES")  # "process at initialization", specify to process the record (NO by default) when starting the IOC. Be careful, when in a output record type, this will write on the device when the IOC starts (something we rarely want)
 
     ## Fields specifying where this record will READ the analog value on the device
     ## (this will be covered in the next workshop about StreamDevice
@@ -774,9 +930,9 @@ record(ao, "workshop-example:calc-avg-test"){
 }
 ```
 
-ℹ️ Note:
+ℹ️ Side note:
 > At the end of every input link (e.g. `INP` field), output link (e.g. `OUT` field) and forward link (e.g. `FLNK` field),
-> you can add some link "options" in orther to further specify inter-records behavior.
+> you can add some link "options" in order to further specify inter-records behavior.
 >
 > Those link options might concern severity:
 >
@@ -799,28 +955,34 @@ record(ao, "workshop-example:calc-avg-test"){
 > So, for example, the `OUT` field of a `calcout` record might look like: `field(OUT, "workshop-example:calc-avg-test NMS NPP")`
 
 Let's double check that the following Makefile `/opt/epics/tops/workshopTop/workshopExampleApp/Db/Makefile`
-contains `DB += workshopExample.db` (which includes our EPICS database file to the build).
+contains the following line (which includes our EPICS database file to the build):
+
+```console
+DB += workshopExample.db
+```
 
 And let's rebuild the Top:
+
 ```bash
 cd /opt/epics/tops/workshopTop/
 make clean && make && echo OK || echo KO
 ```
 
 You can check the file `/opt/epics/tops/workshopTop/db/workshopExample.db`,
-it should have been updated with our latest modifications.
+it should have been updated with our latest modifications (i.e. going from empty to full of records).
 
 Now, let's add the following line:
 
-```
+```console
 dbLoadRecords("${TOP}/db/workshopExample.db")
 ```
 
 to our `st.cmd` file (`/opt/epics/tops/workshopTop/iocBoot/iocWorkshopExample/st.cmd`).
 
-The `st.cmd` file might end up like shown bellow:
+The `st.cmd` file might end up like shown bellow
+(which is a bit more refined/simplified compared to the original one created by `makeBaseApp.pl`):
 
-```
+```console
 #!../../bin/linux-x86_64/workshopExample
 
 < envPaths
@@ -855,7 +1017,7 @@ but it also encompasses a structured data encoding referred to as PV Data.
 
 See <https://epics-controls.org/resources-and-support/documents/pvaccess/>
 and <https://epics-controls.org/resources-and-support/documents/pvaccess/>
-for more details about PVA
+for more details about PVA.
 
 ## Basic CA client interaction
 
@@ -868,7 +1030,7 @@ for more details about PVA
 
 - Check for errors in the terminal output (there should be none).
 
-- You should be greated with the `epics>` shell prompt.
+- You should be greeted with the `epics>` shell prompt.
   In this shell, you can run:
   - `dbl` to get a list of your PVs;
   - `dbpr <pv-name>` to print the value of a PV;
@@ -881,35 +1043,47 @@ for more details about PVA
 - In the new terminal, you can run:
 
   - `caget <pv-name>`, in order to read from a PV.
-     For example `caget workshop-example:analog-input-test` 
+     For example `caget workshop-example:analog-input-test`
      (which is the same as `caget workshop-example:analog-input-test.VAL`)
      should return `12.34`,
      and for example `caget workshop-example:analog-input-test.DESC` should return `short desc under 40 chars`.
+
   - `caget -h`, for more details about the `caget` command (see also <https://docs.epics-controls.org/projects/base/en/latest/caget.html>)
 
   - `caput <pv-name>`, in order to write to a PV.
      For example `caput workshop-example:analog-output-test 42.42`
      (which is the same as `caput workshop-example:analog-output-test.VAL`)
      should return something like:
-     ```
+
+     ```console
      Old : workshop-example:analog-output-test 43.21
      New : workshop-example:analog-output-test 42.42
      ```
+
   - `caput -h`, for more details about the `caput` command (see also <https://docs.epics-controls.org/projects/base/en/latest/caput.html>)
 
-  - `camonitor <pv-name`, in order to monitor a PV (every new value will be prompted in the terminal)
-     For example run `camonitor workshop-example:analog-output-test`,
-     and then run `dbpf workshop-example:analog-output-test 123` in the previous IOC Shell terminal.
-     Back to the `camonitor` terminal, you should see something like `workshop-example:analog-output-test 1970-01-01 00:00:00.000000 123`.
-  - `camonitor -h`, for more details about the `camonitor` command (see also <https://docs.epics-controls.org/projects/base/en/latest/camonitor.html>)
+  - `camonitor <pv-name`, in order to monitor a PV
+    (every new value will be prompted in the terminal).
+    For example run `camonitor workshop-example:analog-output-test`,
+    and then run `dbpf workshop-example:analog-output-test 123` in the previous IOC Shell terminal.
+    Back to the `camonitor` terminal,
+    you should see something like `workshop-example:analog-output-test 1970-01-01 00:00:00.000000 123`.
+
+  - `camonitor -h`, for more details about the `camonitor` command
+    (see also <https://docs.epics-controls.org/projects/base/en/latest/camonitor.html>)
 
   - `cainfo <pv-name>`, in order to get and print channel and connection information for `<pv-name>`
-  - `cainfo -h`, for more details about the `cainfo` command (see also <https://docs.epics-controls.org/projects/base/en/latest/cainfo.html>)
+
+  - `cainfo -h`, for more details about the `cainfo` command
+    (see also <https://docs.epics-controls.org/projects/base/en/latest/cainfo.html>)
 
   - `catime <pv-name>`, in order to perform a CA performance test
-  - `catime -h`, for more details about the `catime` command (see also <https://docs.epics-controls.org/projects/base/en/latest/catime.html>)
 
-  - See <https://docs.epics-controls.org/projects/base/en/latest/ca-cli.html> for all available CA command-line 
+  - `catime`, for more details about the `catime` command
+    (see also <https://docs.epics-controls.org/projects/base/en/latest/catime.html>)
+
+  - See <https://docs.epics-controls.org/projects/base/en/latest/ca-cli.html>
+    for all available CA command-line
     (provided by the EPICS base we installed earlier).
 
 - Exit the running IOC with the `exit` command (or with `Ctrl+C`).
@@ -921,25 +1095,50 @@ for more details about PVA
 ## Basic PVA client interaction
 
 First, we have to enable the PVA part of our IOC,
-by adding 
-```
-# Include dbd files from all support applications:
-#workshopExample_DBD += xxx.dbd
-workshopExample_DBD += PVAServerRegister.dbd
-workshopExample_DBD += qsrv.dbd
-```
-and
-```
-# Add all the support libraries needed by this IOC
-#workshopExample_LIBS += xxx
-workshopExample_LIBS += qsrv
-workshopExample_LIBS += $(EPICS_BASE_PVA_CORE_LIBS)
-```
+by editing `/opt/epics/tops/workshopTop/workshopExampleApp/src/Makefile`
+like so:
 
-to `/opt/epics/tops/workshopTop/workshopExampleApp/src/Makefile`.
-
+```diff
+  ...
+  #=============================
+  # Build the IOC application
+  
+  PROD_IOC = workshopExample
+  # workshopExample.dbd will be created and installed
+  DBD += workshopExample.dbd
+  
+  # workshopExample.dbd will be made up from these files:
+  workshopExample_DBD += base.dbd
+  
+  # Include dbd files from all support applications:
+  #workshopExample_DBD += xxx.dbd
++ workshopExample_DBD += PVAServerRegister.dbd
++ workshopExample_DBD += qsrv.dbd
+  
+  # Add all the support libraries needed by this IOC
+  #workshopExample_LIBS += xxx
++ workshopExample_LIBS += qsrv
++ workshopExample_LIBS += $(EPICS_BASE_PVA_CORE_LIBS)
+  
+  # workshopExample_registerRecordDeviceDriver.cpp derives from workshopExample.dbd
+  workshopExample_SRCS += workshopExample_registerRecordDeviceDriver.cpp
+  
+  # Build the main IOC entry point on workstation OSs.
+  workshopExample_SRCS_DEFAULT += workshopExampleMain.cpp
+  workshopExample_SRCS_vxWorks += -nil-
+  
+  # Add support from base/src/vxWorks if needed
+  #workshopExample_OBJS_vxWorks += $(EPICS_BASE_BIN)/vxComLibrary
+  
+  # Finally link to the EPICS Base libraries
+  workshopExample_LIBS += $(EPICS_BASE_IOC_LIBS)
+  
+  #===========================
+  ...
+```
 
 Then let's rebuild the Top:
+
 ```bash
 cd /opt/epics/tops/workshopTop/
 make clean && make && echo OK || echo KO
@@ -955,18 +1154,17 @@ cd /opt/epics/tops/workshopTop/iocBoot/iocWorkshopExample/
 Once in the IOC Shell, run the `pvasr` command and verify that "QSRV" is among the "PROVIDER_NAMES",
 for example:
 
-```
+```console
 epics> pvasr
-VERSION : pvAccess Server v6.0.0-SNAPSHOT
-PROVIDER_NAMES : QSRV,
-BEACON_ADDR_LIST :
-AUTO_BEACON_ADDR_LIST : 1
-BEACON_PERIOD : 15
-BROADCAST_PORT : 5076
-SERVER_PORT : 5075
-RCV_BUFFER_SIZE : 16384
-IGNORE_ADDR_LIST:
-INTF_ADDR_LIST : 0.0.0.0
+pvAccess Server v7.1.8
+Active configuration (w/ defaults)
+EPICS_PVAS_INTF_ADDR_LIST = 0.0.0.0:5075
+EPICS_PVAS_BEACON_ADDR_LIST =
+EPICS_PVAS_AUTO_BEACON_ADDR_LIST = YES
+EPICS_PVAS_BEACON_PERIOD = 15
+EPICS_PVAS_BROADCAST_PORT = 5076
+EPICS_PVAS_SERVER_PORT = 5075
+EPICS_PVAS_PROVIDER_NAMES = QSRV
 ```
 
 - Open a new terminal.
@@ -974,32 +1172,39 @@ INTF_ADDR_LIST : 0.0.0.0
 - In the new terminal, you can run:
 
   - `pvget <pv-name>`, in order to read from a PV.
-     For example `pvget workshop-example:analog-input-test` 
+     For example `pvget workshop-example:analog-input-test`
      (which is the same as `pvget workshop-example:analog-input-test.VAL`).
      and for example `pvget workshop-example:analog-input-test.DESC` should return `short desc under 40 chars`.
+
   - `pvget -h`, for more details about the `pvget` command
 
   - `pvput <pv-name>`, in order to write to a PV.
      For example `pvput workshop-example:analog-output-test 12.34`
      (which is the same as `pvput workshop-example:analog-output-test.VAL`)
      should return something like:
-     ```
+
+     ```console
      Old : workshop-example:analog-output-test 42.42
      New : workshop-example:analog-output-test 12.34
      ```
+
   - `pvput -h`, for more details about the `pvput` command
 
   - `pvmonitor <pv-name`, in order to monitor a PV (every new value will be prompted in the terminal)
      For example run `pvmonitor workshop-example:analog-output-test`,
      and then run `dbpf workshop-example:analog-output-test 321` in the previous IOC Shell terminal.
      Back to the `pvmonitor` terminal, you should see something like `workshop-example:analog-output-test 1970-01-01 00:00:00.000000 321`.
+
   - `pvmonitor -h`, for more details about the `pvmonitor` command
 
   - `pvinfo <pv-name>`, in order to get and print structure and connection information for `<pv-name>`
+
   - `pvinfo -h`, for more details about the `pvinfo` command
 
   - `pvlist`, in order to get a list of all PVA servers (IOCs) that can be found
+
   - `pvlist <ip-address>`, in order to get a list of all PVs of a specific PVA server (IOC)
+
   - `pvlist -h`, for more details about the `pvlist` command
 
 - Exit the running IOC with the `exit` command (or with `Ctrl+C`).
@@ -1008,15 +1213,16 @@ INTF_ADDR_LIST : 0.0.0.0
 > All those commands act as PV Access clients
 > (similar to other clients like Phoebus, archiving systems, alarm systems, etc).
 
-## What are macros, `.template` files and `.substitutions` files
+## What are macros, `.template` files and `.substitutions` files?
 
-- An EPICS template file (`.template`) is just like a `.db` file, 
+- An EPICS template file (`.template`) is just like a `.db` file,
   but have macros that **needs** to be replaced, usually with a `.substitutions` file.
 
 - A macro is a string substitution mechanism,
-  that allows some EPICS "configuration" files (e.g. like `.db` and `.template` files)
+  that allows some EPICS "configuration" files
+  (e.g. like `.db` and `.template` files)
   to be loaded after some strings have been replaced by others.
-  E.g. `MY_MACRO_NAME=foo`, will replace every `${MY_MACRO_NAME}` (or `$(MY_MACRO_NAME)`) 
+  E.g. `MY_MACRO_NAME=foo`, will replace every `${MY_MACRO_NAME}` (or `$(MY_MACRO_NAME)`)
   by `foo` in any associated "configuration" file.
   This is very useful e.g. when loading the same "configuration" file multiple times but with some intended implementations differences.
   See <https://docs.epics-controls.org/en/latest/appdevguide/databaseDefinition.html#macro-substitution> for more details about macros.
@@ -1028,9 +1234,9 @@ INTF_ADDR_LIST : 0.0.0.0
   of a `.substitutions` file for more details.
 
 As an example,
-let's create a simple `.template` file `/opt/epics/tops/workshopTop/workshopExampleApp/Db/workshopExample.db`:
+let's create a simple `.template` file `/opt/epics/tops/workshopTop/workshopExampleApp/Db/workshopExample.template`:
 
-```
+```console
 record(bi, "${PREFIX}:${DEVICE-NAME}:workshop-example:bi-test"){
 
     field(DESC, "${DEVICE-NAME} on/off switch")
@@ -1086,6 +1292,7 @@ Don't forget to add it to the database Makefile `/opt/epics/tops/workshopTop/wor
 ```
 
 Then let's rebuild the Top:
+
 ```bash
 cd /opt/epics/tops/workshopTop/
 make clean && make && echo OK || echo KO
@@ -1094,9 +1301,9 @@ make clean && make && echo OK || echo KO
 Now let's create a `.substitutions` file inside the `iocBoot` directory:
 `/opt/epics/tops/workshopTop/iocBoot/iocWorkshopExample/workshopExample.substitutions`
 
-With the folling content:
+With the following content:
 
-```
+```console
 global
 {
     PREFIX="macro-subs-test",
@@ -1104,16 +1311,16 @@ global
 
 file "${TOP}/db/workshopExample.template"
 {
-    pattern {DEVICE-NAME, DEVICE-TYPE, PORT-NUMBER, ${ADDRESS}, ${TIMEOUT}}
-            {valve1, valve, 12345, 67890, 999}
-            {valve2, valve, 54321, 09876, 999}
-            {valve3, valve, 11111, 22222, 999}
+    pattern {DEVICE-NAME, DEVICE-TYPE, PORT-NUMBER, ADDRESS, TIMEOUT}
+            {valve1,      valve,       12345,       67890,   999    }
+            {valve2,      valve,       54321,       09876,   999    }
+            {valve3,      valve,       11111,       22222,   999    }
 }
 ```
 
-And add it to your `st.cmd` like so:
+And add it to your `/opt/epics/tops/workshopTop/iocBoot/st.cmd` file like so:
 
-```diff 
+```diff
   ...
 
   ## Load record instances
@@ -1130,7 +1337,8 @@ cd /opt/epics/tops/workshopTop/iocBoot/iocWorkshopExample/
 ./st.cmd
 ```
 
-You should see all your new PVs.
+You should see all your new PVs
+(e.g. by running the `dbl` command inside the IOC Shell).
 
 ## How to use `sub` and `asub` record types?
 
@@ -1143,11 +1351,11 @@ See
 and <https://docs.epics-controls.org/projects/base/en/latest/aSubRecord.html>
 for more details about those record types.
 
-Let's create the followng `.db` file
-(`/opt/epics/tops/workshopTop/workshopExampleApp/Db/workshopExampleForSubAndASub.db`) 
+Let's create the following `.db` file
+(`/opt/epics/tops/workshopTop/workshopExampleApp/Db/workshopExampleForSubAndASub.db`)
 in order to showcase how to use a `sub` record and a `aSub` record:
 
-```
+```console
 record(ai,"workshop-example:ai-for-sub-asub-example")
 {
     field(DESC, "some dummy ai")
@@ -1181,7 +1389,8 @@ record(ao,"workshop-example:ao-for-sub-asub-example")
 ```
 
 And let's add it to the associated `Db/Makefile`
-(i.e. `/opt/epics/tops/workshopTop/workshopExampleApp/Db/Makefile`):
+(i.e. `/opt/epics/tops/workshopTop/workshopExampleApp/Db/Makefile`)
+like so:
 
 ```diff
   ...
@@ -1208,11 +1417,11 @@ And let's add it to the associated `Db/Makefile`
   #  ADD RULES AFTER THIS LINE
 ```
 
-Now let's create the C file 
+Now let's create the C file
 (`/opt/epics/tops/workshopTop/workshopExampleApp/src/workshopExampleForSubAndASub.c`),
 where our `sub` and `aSub` records will call their associated functions:
 
-```
+```c
 #include <stdio.h>
 
 #include <dbDefs.h>
@@ -1285,7 +1494,7 @@ epicsRegisterFunction(myASubProcess);
 Then, create the associated `.dbd` file
 (`/opt/epics/tops/workshopTop/workshopExampleApp/src/workshopExampleForSubAndASub.dbd`):
 
-```
+```console
 variable(mySubASubDebug)
 function(mySubInit)
 function(mySubProcess)
@@ -1296,11 +1505,11 @@ function(myASubProcess)
 ⚠️ Important:
 > The function name from the C file (`mySubInit`, `mySubProcess`, `myASubInit` and `myASubProcess`)
 > have to match those declared in the `workshopExampleForSubAndASub.dbd` file
-> and thoses declared in the `INAM` and `SNAM` fields
+> and those declared in the `INAM` and `SNAM` fields
 > of the previously specified `workshopExampleForSubAndASub.db` file.
 
 Now let's update the `src/Makefile` accordingly
-(i.e. `/opt/epics/tops/workshopTop/workshopExampleApp/src/Makfile`):
+(i.e. `/opt/epics/tops/workshopTop/workshopExampleApp/src/Makefile`):
 
 ```diff
   ...
@@ -1319,10 +1528,10 @@ Now let's update the `src/Makefile` accordingly
   ...
 ```
 
-Finally, update the `.cmd` file 
+Then, update the `.cmd` file
 (`opt/epics/tops/workshopTop/iocBoot/iocWorkshopExample/st.cmd`):
 
-```diff 
+```diff
   ...
 
   ## Load record instances
@@ -1333,10 +1542,13 @@ Finally, update the `.cmd` file
   iocInit
 ```
 
-And run the IOC:
+Finally, build and run the IOC:
 
 ```bash
-cd /opt/epics/tops/workshopTop/iocBoot/iocWorkshopExample/
+cd /opt/epics/tops/workshopTop/
+make clean && make && echo OK || echo KO
+
+cd ./iocBoot/iocWorkshopExample/
 ./st.cmd
 ```
 
@@ -1348,17 +1560,27 @@ After that, if you run `dbpr workshop-example:ao-for-sub-asub-example`,
 then you will see that a new value has indeed been injected by your C code.
 
 ℹ️ Note:
-> An interesting alternative to `sub` and `aSub` records 
+> An interesting alternative to `sub` and `aSub` records
 > is [PyDevice](https://github.com/klemenv/PyDevice/)
 > which allow to call Python code instead of C or C++ code.
 
 ## How to import a support module?
 
-First let's create a location to store all our support modules:
+A support module is an other Top,
+intended to be imported so that its functionalities can be used
+(e.g. in order to enable your IOC to use a specific communication protocol).
+
+First let's create a location to store all our future support modules:
+
 ```bash
 cd /opt/epics/
 mkdir support
 ```
+
+ℹ️ Note:
+> You can install support modules wherever you want,
+> not necessarily in `/opt/epics/support`.
+> Feel free to use a different directory if you prefer.
 
 ### Asyn example
 
@@ -1381,14 +1603,15 @@ cd /opt/epics/support
 git clone https://github.com/epics-modules/asyn.git asyn-4.45
 ln -s asyn-4.45 asyn
 cd asyn-4.45
-git checkout R4.45 # checkout to the latest tagged version of asyn (latest asyn version at the time of writing)
+git checkout R4-45 # checkout to the latest tagged version of asyn (latest asyn version at the time of writing)
 ```
 
-Add the following `/opt/epics/support/asyn/configure/RELEASE.local` configuration file
+Create the following `/opt/epics/support/asyn/configure/RELEASE.local` configuration file
 (whose content will override the one of the `RELEASE` file,
 without having to modify it directly,
 in order to specify the needed dependencies):
-```
+
+```console
 SUPPORT=/opt/epics/support
 EPICS_BASE=/opt/epics/base
 ```
@@ -1399,6 +1622,15 @@ e.g. needed for [VXI-11](https://epics-modules.github.io/asyn/asynDriver.html#vx
 
 ```bash
 sudo apt install rpcsvc-proto libtirpc-common libtirpc-dev
+```
+
+Create the following `/opt/epics/support/asyn/configure/CONFIG_SITE.local` configuration file
+(whose content will override the one of the `CONFIG_SITE` file,
+without having to modify it directly,
+in order to further configure the RPC dependency):
+
+```console
+TIRPC=YES
 ```
 
 Then build asyn:
@@ -1418,15 +1650,23 @@ First, let's change directory to the workshopTop:
 cd /opt/epics/tops/workshopTop
 ```
 
-Then, edit the `/opt/epics/tops/workshopTop/configre/RELEASE`,
+Then, edit the `/opt/epics/tops/workshopTop/configure/RELEASE`,
 in order to add the following:
+
 ```diff
   ...
+
   # Variables and paths to dependent modules:
-  #MODULES = /path/to/modules
-  #MYMODULE = $(MODULES)/my-module
+- #MODULES = /path/to/modules
+- #MYMODULE = $(MODULES)/my-module
 + SUPPORT = /opt/epics/support
 + ASYN = ${SUPPORT}/asyn-4.45
+
+  # If using the sequencer, point SNCSEQ at its top directory:
+  #SNCSEQ = $(MODULES)/seq-ver
+  
+  # EPICS_BASE should appear last so earlier modules can override stuff:
+  EPICS_BASE = /opt/epics/base-7.0.10
   ...
 ```
 
@@ -1442,7 +1682,7 @@ in order to add the following:
 + workshopExample_DBD += asyn.dbd
 + workshopExample_DBD += drvAsynIPPort.dbd
 + workshopExample_DBD += drvAsynSerialPort.dbd
-+ #workshopExample_DBD += drv<...>.dbd
++ #workshopExample_DBD += drvAsyn<...>.dbd
 
   # Add all the support libraries needed by this IOC
   #workshopExample_LIBS += xxx
@@ -1453,6 +1693,7 @@ in order to add the following:
 ```
 
 Then re-build your Top:
+
 ```bash
 cd /opt/epics/tops/workshopTop
 make clean && make && echo OK || echo KO
@@ -1465,10 +1706,10 @@ Asyn is now properly imported!
 As an other example,
 let's import [StreamDevice](https://paulscherrerinstitute.github.io/StreamDevice/)
 which is also a top (Asyn-based),
-and allow your IOC to communicate whith your device,
+and allow your IOC to communicate with your device,
 if your device use any string based communication protocol.
 
-#### Install StreamDevice 
+#### Install StreamDevice
 
 Something we can notice
 when looking at the [StreamDevice source code](https://github.com/paulscherrerinstitute/StreamDevice),
@@ -1489,13 +1730,19 @@ Add the following `/opt/epics/support/streamdevice/configure/RELEASE.local` conf
 (whose content will override the one of the `RELEASE` file,
 without having to modify it directly,
 in order to specify the needed dependencies):
-```
+
+```console
 SUPPORT=/opt/epics/support
 ASYN=${SUPPORT}/asyn
 undefine CALC # no need for CALC support in this workshop
 undefine PCRE # no need for PCRE support in this workshop
 EPICS_BASE=/opt/epics/base
 ```
+
+ℹ️ Note:
+> StreamDevice has a mandatory dependency to Asyn
+> and optional dependencies to CALC and PCRE
+> which is what we specified in the `RELEASE.local` file.
 
 Then build StreamDevice:
 
@@ -1514,16 +1761,22 @@ First, let's change directory to the workshopTop:
 cd /opt/epics/tops/workshopTop
 ```
 
-Then, edit the `/opt/epics/tops/workshopTop/configre/RELEASE`,
+Then, edit the `/opt/epics/tops/workshopTop/configure/RELEASE`,
 in order to add the following:
+
 ```diff
   ...
+
   # Variables and paths to dependent modules:
-  #MODULES = /path/to/modules
-  #MYMODULE = $(MODULES)/my-module
   SUPPORT = /opt/epics/support
   ASYN = ${SUPPORT}/asyn-4.45
 + STREAMDEVICE = ${SUPPORT}/streamdevice-2.8.26
+
+  # If using the sequencer, point SNCSEQ at its top directory:
+  #SNCSEQ = $(MODULES)/seq-ver
+  
+  # EPICS_BASE should appear last so earlier modules can override stuff:
+  EPICS_BASE = /opt/epics/base-7.0.10
   ...
 ```
 
@@ -1548,10 +1801,15 @@ in order to add the following:
   workshopExample_LIBS += $(EPICS_BASE_PVA_CORE_LIBS)
   workshopExample_LIBS += asyn
 + workshopExample_LIBS += stream
+
+  # Include dbd files and source files sub and aSub:
+  workshopExample_DBD += workshopExampleForSubAndASub.dbd
+  workshopExample_SRCS += workshopExampleForSubAndASub.c
   ...
 ```
 
 Then re-build your Top:
+
 ```bash
 cd /opt/epics/tops/workshopTop
 make clean && make && echo OK || echo KO
@@ -1691,8 +1949,8 @@ $ tree lib
 You Top can now properly be exported/imported!
 
 ℹ️ Note:
-> If your Top has no App but just a Sup directory 
-> (i.e. your Top is juste meant to be exported/imported),
+> If your Top has no App but just a Sup directory
+> (i.e. your Top is just meant to be exported/imported),
 > then you can skip the whole `# Build the IOC application` of your `src/Makefile`
 > and remove it altogether.
 
@@ -1742,36 +2000,99 @@ and by modifying the `<...>App/src/Makefile` e.g. like so:
   ...
 ```
 
+### Dependency management considerations
+
+What we just have done by importing Asyn, StreamDevice, and by making your workshopTop "exportable"
+is called dependency management.
+
+Chances are you're already familiar with this concept,
+if not: think of it like adding a module in Python with [pip](https://packaging.python.org/en/latest/tutorials/installing-packages/),
+[poetry](https://docs.astral.sh/uv/)
+or [uv](https://docs.astral.sh/uv/)
+(or any oder package manager).
+This is similar to adding a crate in Rust with [cargo](https://doc.rust-lang.org/cargo/)
+or to add a package in JavaScript wit [npm](https://docs.npmjs.com/about-npm).
+This is also similar to Linux distribution package managers
+like [apt](https://wiki.debian.org/Apt),
+[dnf](https://docs.fedoraproject.org/en-US/quick-docs/dnf/)
+or [pacman](https://wiki.archlinux.org/title/Pacman).
+
+But the first thing we can notice with EPICS is that there is no default package manager.
+By default we have to manage "packages" (i.e. other Tops) by hand
+like we just did with Asyn and StreamDevice.
+I.e. we have to manually download, build, configure and import our dependencies
+(and potentially the dependencies of our dependencies, e.g. Asyn needed by StreamDevice).
+
+In this tutorial,
+it might not seem like much,
+but it can quickly become much more complex than it appears
+(usually, the more dependencies there are, the more complex it is).
+Some support module will require other support modules as dependencies,
+but only on specific versions of those modules.
+And when you have to cross-reference these version requirements across multiple modules,
+it can sometimes turn into quite a puzzle to solve.
+
+An important piece of the puzzle to keep in mind is the EPICS base version.
+Your IOC is built with a specific version of the EPICS base (e.g. `7.0.10`),
+and needs every of its support modules dependencies to be built with the exact same version of the base.
+Otherwise, EPICS will complain by throwing an error at build time.
+E.g. here is the error message thrown while trying to compile an IOC built with EPICS base `7.0.10`,
+and importing the Asyn support module built with EPICS base `7.0.9`:
+
+```console
+Definition of EPICS_BASE conflicts with ASYN support.
+In this application or module, a RELEASE file
+conflicts with ASYN at /opt/epics-test/asyn
+  Here: EPICS_BASE = /opt/epics/base-7.0.10
+  ASYN: EPICS_BASE = /opt/epics/base-7.0.9
+```
+
+Note that some initiatives are trying to solve that puzzle for you,
+e.g. [synApps](https://epics-synapps.github.io/support/synApps.html).
+
+Other initiatives are trying to build proper package managers for the EPICS community
+(e.g. [e3](https://e3.pages.ess.eu/) and [EPNix](https://epics-extensions.github.io/EPNix/))
+
+Others will just avoid "traditional IOCs" (i.e. IOCs like described in this tutorial) altogether,
+and use common programming languages (*with common dependency management*) and use CA and/or PVA dependencies
+like [P4P](https://epics-base.github.io/p4p/index.html) in Python or [PVXS](https://epics-base.github.io/pvxs/index.html) in C++.
+In this case, the resulting programs are not even considered to be IOCs anymore,
+they are called PVA servers (if using the PVA communication protocol)
+or CA servers (if using the CA communication protocol).
 
 ---
 
 ## Bonus
 
-### Other common system dependencies
+### Troubleshooting
 
-```
-sudo apt install re2c                                                         # SEQ module dependency (for SNL sequencing)
-sudo dnf install xorg-x11-proto-devel libX11-devel libXext-devel libusb-devel # Area Detector dependencies
-```
+🚧 TODO 🚧 troubleshooting guide in separate .md file
 
 ### How to overcharge a record
 
-using the `*` record "type"
+🚧 TODO 🚧 Using the `*` record "type"
+
+### How to use StreamDevice
 
 🚧 TODO 🚧
+
+See <https://docs.epics-controls.org/en/latest/getting-started/HowToUseStreamDevice.html>
+and see <https://paulscherrerinstitute.github.io/StreamDevice/>
+
+Using [lewis](https://github.com/ISISComputingGroup/lewis) for communication simulation.
+See <https://isiscomputinggroup.github.io/lewis/index.html>.
 
 ### How to import a support module (e.g. SNL)?
 
-🚧 TODO 🚧
-
-<https://epics-modules.github.io/sequencer/Installation.html>
+🚧 TODO 🚧 <https://epics-modules.github.io/sequencer/Installation.html>
 
 ### How to use SNL?
 
-🚧 TODO 🚧
+🚧 TODO 🚧 <https://epics-modules.github.io/sequencer/>
 
-<https://epics-modules.github.io/sequencer/>
-
+```console
+sudo apt install re2c  # SEQ module dependency (for SNL sequencing)
+```
 
 ### How to run multiple IOCs on the same computer?
 
@@ -1779,11 +2100,8 @@ using the `*` record "type"
 
 ### What is procServ, how to use it in order to run an IOC and how to include it in a SystemD service?
 
-🚧 TODO 🚧
-
-<https://github.com/ralphlange/procServ>
+🚧 TODO 🚧 <https://github.com/ralphlange/procServ>
 
 ```bash
 sudo apt install procServ
 ```
-
