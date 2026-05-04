@@ -179,22 +179,22 @@ docker run --interactive --tty --name ubuntu-epics-formation ubuntu-noble
 > If you want to find it back and run it again (resuming where you left):
 >
 > ```bash
-> $ docker ps -a
+> docker ps -a
 >   CONTAINER ID   IMAGE           COMMAND       CREATED        STATUS                    PORTS     NAMES
 >   abcdef123456   ubuntu:noble    "bash"        24 hours ago   Exited (0) 24 hours ago             ubuntu-epics-formation
 >
-> $ docker start ubuntu-epics-formation
-> $ docker attach ubuntu-epics-formation
+> docker start ubuntu-epics-formation
+> docker attach ubuntu-epics-formation
 > ```
 
 Once inside your container, run:
 
 ```bash
-docker$ apt install sudo vim nano
+apt install sudo vim nano
 ```
 
 If the `USER` environment variable is empty,
-i.e. if `docker$ echo $USER` returns an empty sting,
+i.e. if `echo $USER` returns an empty sting,
 then export your user name (here `root`) it to the `USER` environment variable
 by editing the `$HOME/.bashrc` file
 (or `.profile`, `.zshrc`, `.zshenv`, etc)
@@ -1937,8 +1937,8 @@ Now, if you check the `lib` folder of your Top,
 you some new files (libraries) in it:
 
 ```bash
-$ cd /opt/epics/tops/workshopTop
-$ tree lib
+cd /opt/epics/tops/workshopTop
+tree lib
 
   lib
   └── linux-x86_64
