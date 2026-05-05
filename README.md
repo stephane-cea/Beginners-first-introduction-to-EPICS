@@ -284,8 +284,8 @@ and specify that every file or directory created in `/opt/epics` will automatica
 so we won't have to bother owner and group rights anymore.
 
 ℹ️ Note:
-> Again, those group rights and permissions are optional,
-> we are using them in this tutorial because they are very convenient.
+> Again, those group rights and permissions are *optional*.
+> We are using them in this tutorial because they are very convenient.
 > Ultimately, you can still manage groups and permissions the way you want.
 
 Now, let's download and build the EPICS base (`7`) from source.
@@ -300,7 +300,6 @@ cd /opt/epics
 wget https://github.com/epics-base/epics-base/releases/download/R7.0.10/base-7.0.10.tar.gz
 tar xvf base-7.0.10.tar.gz
 rm base-7.0.10.tar.gz
-ln -s base-7.0.10 base
 ```
 
 Export it to your `PATH`
@@ -310,7 +309,7 @@ by editing `$HOME/.bashrc`
 and adding the following line at the end of this file:
 
 ```bash
-export EPICS_BASE=/opt/epics/base
+export EPICS_BASE=/opt/epics/base-7.0.10
 export EPICS_HOST_ARCH=$(${EPICS_BASE}/startup/EpicsHostArch)
 export PATH=${EPICS_BASE}/bin/${EPICS_HOST_ARCH}:${PATH}
 ```
@@ -324,7 +323,7 @@ source $HOME/.bashrc
 Now, let's build the base:
 
 ```bash
-cd /opt/epics/base
+cd /opt/epics/base-7.0.10
 make clean && make && echo OK || echo KO # on Github Codespaces, this command can take about 10-15 minutes to complete
 ```
 
@@ -1570,16 +1569,17 @@ A support module is an other Top,
 intended to be imported so that its functionalities can be used
 (e.g. in order to enable your IOC to use a specific communication protocol).
 
-First let's create a location to store all our future support modules:
+First let's create a location to store all our future support modules
+that will be build with EPICS base `7.0.10`:
 
 ```bash
 cd /opt/epics/
-mkdir support
+mkdir support-7.0.10
 ```
 
 ℹ️ Note:
 > You can install support modules wherever you want,
-> not necessarily in `/opt/epics/support`.
+> not necessarily in `/opt/epics/support-7.0.10`.
 > Feel free to use a different directory if you prefer.
 
 ### Asyn example
@@ -1599,21 +1599,20 @@ like any other support module.
 So let's download it, configure it and build it:
 
 ```bash
-cd /opt/epics/support
+cd /opt/epics/support-7.0.10
 git clone https://github.com/epics-modules/asyn.git asyn-4.45
-ln -s asyn-4.45 asyn
 cd asyn-4.45
 git checkout R4-45 # checkout to the latest tagged version of asyn (latest asyn version at the time of writing)
 ```
 
-Create the following `/opt/epics/support/asyn/configure/RELEASE.local` configuration file
+Create the following `/opt/epics/support-7.0.10/asyn-4.45/configure/RELEASE.local` configuration file
 (whose content will override the one of the `RELEASE` file,
 without having to modify it directly,
 in order to specify the needed dependencies):
 
 ```console
-SUPPORT=/opt/epics/support
-EPICS_BASE=/opt/epics/base
+SUPPORT=/opt/epics/support-7.0.10
+EPICS_BASE=/opt/epics/base-7.0.10
 ```
 
 Install some dependencies
@@ -1624,7 +1623,7 @@ e.g. needed for [VXI-11](https://epics-modules.github.io/asyn/asynDriver.html#vx
 sudo apt install rpcsvc-proto libtirpc-common libtirpc-dev
 ```
 
-Create the following `/opt/epics/support/asyn/configure/CONFIG_SITE.local` configuration file
+Create the following `/opt/epics/support-7.0.10/asyn-4.45/configure/CONFIG_SITE.local` configuration file
 (whose content will override the one of the `CONFIG_SITE` file,
 without having to modify it directly,
 in order to further configure the RPC dependency):
@@ -1636,7 +1635,7 @@ TIRPC=YES
 Then build asyn:
 
 ```bash
-cd /opt/epics/support/asyn-4.45
+cd /opt/epics/support-7.0.10/asyn-4.45
 make clean && make && echo OK || echo KO
 ```
 
@@ -1659,7 +1658,7 @@ in order to add the following:
   # Variables and paths to dependent modules:
 - #MODULES = /path/to/modules
 - #MYMODULE = $(MODULES)/my-module
-+ SUPPORT = /opt/epics/support
++ SUPPORT = /opt/epics/support-7.0.10
 + ASYN = ${SUPPORT}/asyn-4.45
 
   # If using the sequencer, point SNCSEQ at its top directory:
@@ -1719,24 +1718,23 @@ like any other support module.
 So let's download it, configure it and build it:
 
 ```bash
-cd /opt/epics/support
+cd /opt/epics/support-7.0.10
 git clone https://github.com/paulscherrerinstitute/StreamDevice.git streamdevice-2.8.26
-ln -s streamdevice-2.8.26 streamdevice
 cd streamdevice-2.8.26 
 git checkout 2.8.26 # checkout to the latest tagged version of StreamDevice (latest asyn version at the time of writing)
 ```
 
-Add the following `/opt/epics/support/streamdevice/configure/RELEASE.local` configuration file
+Add the following `/opt/epics/support-7.0.10/streamdevice-2.8.26/configure/RELEASE.local` configuration file
 (whose content will override the one of the `RELEASE` file,
 without having to modify it directly,
 in order to specify the needed dependencies):
 
 ```console
-SUPPORT=/opt/epics/support
-ASYN=${SUPPORT}/asyn
+SUPPORT=/opt/epics/support-7.0.10
+ASYN=${SUPPORT}/asyn-4.45
 undefine CALC # no need for CALC support in this workshop
 undefine PCRE # no need for PCRE support in this workshop
-EPICS_BASE=/opt/epics/base
+EPICS_BASE=/opt/epics/base-7.0.10
 ```
 
 ℹ️ Note:
@@ -1747,7 +1745,7 @@ EPICS_BASE=/opt/epics/base
 Then build StreamDevice:
 
 ```bash
-cd /opt/epics/support/streamdevice-2.8.26
+cd /opt/epics/support-7.0.10/streamdevice-2.8.26
 make clean && make && echo OK || echo KO
 ```
 
@@ -1768,7 +1766,7 @@ in order to add the following:
   ...
 
   # Variables and paths to dependent modules:
-  SUPPORT = /opt/epics/support
+  SUPPORT = /opt/epics/support-7.0.10
   ASYN = ${SUPPORT}/asyn-4.45
 + STREAMDEVICE = ${SUPPORT}/streamdevice-2.8.26
 
@@ -1957,17 +1955,14 @@ You Top can now properly be exported/imported!
 From now on,
 an other Top can import the workshopTop
 just like shown with Asyn or StreamDevice in previous sections.
-I.e. you would have to install the workshopTop in the `/opt/epics/support/` directory,
-and build it against the local epics-base,
-then you would to import it from your other Top by adding the workshopTop to the `configure/RELEASE` file
+I.e. you would have to import it from your other Top by adding the workshopTop to the `configure/RELEASE` file
 e.g. like so:
 
 ```diff
   # Variables and paths to dependent modules:
   #MODULES = /path/to/modules
   #MYMODULE = $(MODULES)/my-module
-+ SUPPORT = /opt/epics/support
-+ WORKSHOPEXAMPLE = ${SUPPORT}/workshopTop
++ WORKSHOPEXAMPLE = /path/to/workshopTop
   
   # If using the sequencer, point SNCSEQ at its top directory:
   #SNCSEQ = $(MODULES)/seq-ver
