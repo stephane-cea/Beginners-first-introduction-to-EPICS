@@ -26,7 +26,7 @@ from scratch.
 
 An EPICS IOC is the centerpiece of EPICS:
 On one side, an IOC will communicate with one (or more) device(s),
-think of equipment like power supply unit, motors, solenoid valves, etc.
+think of equipment like power supply units, motors, solenoid valves, etc.
 On the other side,
 an IOC will communicate with its clients.
 So an IOC will forward commands from the clients to the devices,
@@ -333,7 +333,7 @@ and come back to check the build result afterwards.
 
 Now that the EPICS base is installed and built,
 let's shift our focus from the epics-base
-to the main topic of this workshop.
+to the main topic of this tutorial.
 So, let's move right on to the IOC.
 
 ## What is an IOC?
@@ -355,8 +355,8 @@ the IOC will communicate with its clients,
 like HMI systems, archive systems, alarm systems, or even other IOCs, etc.
 It will communicate with those clients
 using the [CA (Channel Access)](https://docs.epics-controls.org/en/latest/ca-ref/introduction.html)
-and/or [PVA (PV Access)](https://docs.epics-controls.org/en/latest/pv-access/protocol.html)
-communication protocols.
+and/or [PVA (PV Access)](https://docs.epics-controls.org/en/latest/pv-access/protocol.html),
+which are communication protocols specific to EPICS.
 
 In order to "connect" the client side to the device side,
 an IOC will host and serve variables
@@ -404,6 +404,13 @@ cd tops/workshopTop
 makeBaseApp.pl -t ioc workshopExample # create the Top and App
 makeBaseApp.pl -a linux-x86_64 -i -t ioc -p workshopExample WorkshopExample # create the iocBoot sub-directory
 ```
+
+ℹ️ Note:
+> The command `makeBaseApp.pl` is provided by the EPICS base,
+> and is located in `/opt/epics/base-7.0.10/bin/${EPICS_HOST_ARCH}`.
+> Your Linux Shell should be aware of this command,
+> because we exported this location to the `PATH` environment variable earlier
+> when installing the EPICS base.
 
 ## What is a Top?
 
@@ -676,7 +683,7 @@ The definitions covered by a `.dbd` file include
 “Menus”, “Record Types”, “Devices”, “Drivers”, “Registrars”, “Variables”, “Functions”, “Breakpoint Tables”, “Record Instances”…
 
 Database definition files are not very beginner friendly and rarely used even for more advanced tasks.
-So we won't spend too much time on `.dbd` in this workshop.
+So we won't spend too much time on `.dbd` in this tutorial.
 
 But if you ever want to learn more about database definitions,
 then see <https://docs.epics-controls.org/en/latest/appdevguide/databaseDefinition.html>
@@ -1732,8 +1739,8 @@ in order to specify the needed dependencies):
 ```console
 SUPPORT=/opt/epics/support-7.0.10
 ASYN=${SUPPORT}/asyn-4.45
-undefine CALC # no need for CALC support in this workshop
-undefine PCRE # no need for PCRE support in this workshop
+undefine CALC # no need for CALC support in this tutorial
+undefine PCRE # no need for PCRE support in this tutorial
 EPICS_BASE=/opt/epics/base-7.0.10
 ```
 
@@ -2077,26 +2084,236 @@ and see <https://paulscherrerinstitute.github.io/StreamDevice/>
 Using [lewis](https://github.com/ISISComputingGroup/lewis) for communication simulation.
 See <https://isiscomputinggroup.github.io/lewis/index.html>.
 
-### How to import a support module (e.g. SNL)?
+### How to import and use Autosave?
 
-🚧 TODO 🚧 <https://epics-modules.github.io/sequencer/Installation.html>
+🚧 TODO 🚧 <https://epics-modules.github.io/autosave/autosave.html>
 
-### How to use SNL?
+### How to import and use SNL?
 
-🚧 TODO 🚧 <https://epics-modules.github.io/sequencer/>
+🚧 TODO 🚧 <https://epics-modules.github.io/sequencer/Installation.html> <https://epics-modules.github.io/sequencer/>
 
 ```console
 sudo apt install re2c  # SEQ module dependency (for SNL sequencing)
 ```
 
+### How to configure Channel Access and PV Access?
+
+🚧 TODO 🚧 <https://docs.epics-controls.org/en/latest/sys-admin/configure-ca.html>
+
+`EPICS_CA_MAX_ARRAY_BYTES=1000000`
+`EPICS_CA_AUTO_ADDR_LIST=YES`
+`EPICS_CA_ADDR_LIST=""`
+`EPICS_CA_AUTO_ADDR_LIST=NO`
+`EPICS_CA_ADDR_LIST="127.0.0.1 192.168.1.1"`
+
 ### How to run multiple IOCs on the same computer?
 
-🚧 TODO 🚧
+🚧 TODO 🚧 <https://docs.epics-controls.org/en/latest/sys-admin/channel-access-reach-multiple-soft-iocs-linux.html>
 
 ### What is procServ, how to use it in order to run an IOC and how to include it in a SystemD service?
 
-🚧 TODO 🚧 <https://github.com/ralphlange/procServ>
+🚧 TODO 🚧 <https://github.com/ralphlange/procServ> <https://docs.epics-controls.org/en/latest/build-system/posix-threads-priority-scheduling-linux.html>
 
 ```bash
 sudo apt install procServ
+```
+
+### Tips
+
+#### Exports tips
+
+```console
+# EPICS Env: base, support, arch
+export EPICS_BASE=/opt/epics/base
+export EPICS_SUPPORT=/opt/epics/support
+export EPICS_HOST_ARCH=$(${EPICS_BASE}/startup/EpicsHostArch)
+
+# EPICS Env: paths
+export PATH=${EPICS_BASE}/bin/${EPICS_HOST_ARCH}:${PATH}
+export PATH=${EPICS_SUPPORT}/bin/${EPICS_HOST_ARCH}:${PATH}
+
+# EPICS Env: libs
+export LD_LIBRARY_PATH=${EPICS_BASE}/lib/${EPICS_HOST_ARCH}:${LD_LIBRARY_PATH}
+export LD_LIBRARY_PATH=${EPICS_SUPPORT}/lib/${EPICS_HOST_ARCH}:${LD_LIBRARY_PATH}
+```
+
+#### Compilation tips
+
+Sometimes, with EPICS, you might encounter compilation issues,
+e.g. because you might be using versions of `gcc` or `g++`
+(or other packages) that are too recent
+(especially when trying to compile older Tops or older versions of the EPICS base).
+
+In that case, first try more permissive build options,
+e.g. instead of `make clean && make`, try:
+
+```console
+make clean && make USR_CFLAGS="-fPIC" USR_CXXFLAGS="-fpermissive -fPIC"
+```
+
+If you need to go further,
+and explicitly specify the C standard version you want to use,
+e.g. using ISO C 2011 standard and ISO C++ 2011 standard,
+then you can try:
+
+```console
+make clean && make CFLAGS="-std=c11 -fPIC" CXXFLAGS="-std=c++11 -fpermissive -fPIC"
+```
+
+Possible values to use with the `-std` option are specified in the GCC manual (`man gcc`):
+
+```console
+c90
+c89
+iso9899:1990
+    Support all ISO C90 programs 
+    (certain GNU extensions that conflict with ISO C90 are disabled).
+    Same as `-ansi` for C code.
+
+iso9899:199409
+    ISO C90 as modified in amendment 1.
+
+c99
+c9x
+iso9899:1999
+iso9899:199x
+    ISO C99.
+    This standard is substantially completely supported,
+    modulo bugs and floating-point issues 
+    (mainly but not entirely relating to optional C99 features from Annexes F and G).
+    See <https://gcc.gnu.org/c99status.html> for more information.
+    The names c9x and iso9899:199x are deprecated.
+
+c11
+c1x
+iso9899:2011
+    ISO C11, the 2011 revision of the ISO C standard.
+    This standard is substantially completely supported, 
+    modulo bugs, float‐ing-point issues 
+    (mainly but not entirely relating to optional C11 features from Annexes F and G)
+    and the optional Annexes K
+    (Bounds-checking interfaces)
+    and L (Analyzability).
+    The name c1x is deprecated.
+
+c17
+c18
+iso9899:2017
+iso9899:2018
+    ISO C17, the 2017 revision of the ISO C standard (published in 2018).
+    This standard is same as C11 except for corrections of defects
+    (all of which are also applied with -std=c11) 
+    and a new value of "__STDC_VERSION__",
+    and so is supported to the same extent as C11.
+
+c23
+c2x
+iso9899:2024
+    ISO C23, the 2023 revision of the ISO C standard (published in 2024).
+    The name c2x is deprecated.
+
+c2y 
+    The next version of the ISO C standard, still under development.
+    The support for this version is experimental and incomplete.
+
+gnu90
+gnu89
+    GNU dialect of ISO C90 (including some C99 features).
+
+gnu99
+gnu9x
+    GNU dialect of ISO C99.  The name gnu9x is deprecated.
+
+gnu11
+gnu1x
+    GNU dialect of ISO C11.  The name gnu1x is deprecated.
+
+gnu17
+gnu18
+    GNU dialect of ISO C17.
+
+gnu23
+gnu2x
+    GNU dialect of ISO C23.
+    This is the default for C code.
+    The name gnu2x is deprecated.
+
+gnu2y
+    The next version of the ISO C standard, still under development, plus GNU extensions.
+    The support for this version is experimental and incomplete.
+    The name gnu2x is deprecated.
+
+c++98
+c++03
+    The 1998 ISO C++ standard plus the 2003 technical corrigendum and some additional defect reports.
+    Same as `-ansi` for C++ code.
+
+gnu++98
+gnu++03
+    GNU dialect of -std=c++98.
+
+c++11
+c++0x
+    The 2011 ISO C++ standard plus amendments.
+    The name c++0x is deprecated.
+
+gnu++11
+gnu++0x
+    GNU dialect of -std=c++11.
+    The name gnu++0x is deprecated.
+
+c++14
+c++1y
+    The 2014 ISO C++ standard plus amendments.
+    The name c++1y is deprecated.
+
+gnu++14
+gnu++1y
+    GNU dialect of -std=c++14.
+    The name gnu++1y is deprecated.
+
+c++17
+c++1z
+    The 2017 ISO C++ standard plus amendments.
+    The name c++1z is deprecated.
+
+gnu++17
+gnu++1z
+    GNU dialect of -std=c++17.
+    This is the default for C++ code.
+    The name gnu++1z is deprecated.
+
+c++20
+c++2a
+    The 2020 ISO C++ standard plus amendments.
+    Support is experimental, and could change in incompatible ways in future releases.
+    The name c++2a is deprecated.
+
+gnu++20
+gnu++2a
+    GNU dialect of -std=c++20.
+    Support is experimental, and could change in incompatible ways in future releases.
+    The name gnu++2a is deprecated.
+
+c++23
+c++2b
+    The 2023 ISO C++ standard plus amendments (published in 2024).
+    Support is experimental, and could change in incompatible ways in future releases.
+    The name c++2b is deprecated.
+
+gnu++23
+gnu++2b
+    GNU dialect of -std=c++23.
+    Support is experimental, and could change in incompatible ways in future releases.
+    The name gnu++2b is deprecated.
+
+c++2c
+c++26
+    The next revision of the ISO C++ standard, planned for 2026.
+    Support is highly experimental, and will almost certainly change in incompatible ways in future releases.
+
+gnu++2c
+gnu++26
+    GNU dialect of -std=c++2c.
+    Support is highly experimental, and will almost certainly change in incompatible ways in future releases.
 ```
