@@ -731,12 +731,12 @@ of the `st.cmd` file:
   ```
 
     When the `.cmd` file is executable,
-    it will instruct the program loader to run the `workshopExample` binary program
+    this line will instruct the program loader to run the `workshopExample` binary program
     relatively to the `.cmd` file
     (i.e. located here: `../../bin/linux-x86_64/workshopExample`,
     which means this absolute path: `/opt/epics/tops/workshopTop/bin/linux-x86_64/workshopExample`),
     passing the content of the `.cmd` file as the first argument.
-    This is known as a [Shebang](wikipedia:Shebang_(Unix)).
+    This is known as a [Shebang](https://en.wikipedia.org/wiki/Shebang_%28Unix%29).
     Note that the content of this `.cmd` file
     is a script written with a dedicated EPICS script language
     called IOC Shell (`iocsh`).
@@ -802,7 +802,7 @@ of the `st.cmd` file:
 
 ℹ️ Note:
 > Every types and fields are documented here:
-> <https://docs.epics-controls.org/projects/base/en/latest/ComponentReference.html>
+> <https://docs.epics-controls.org/projects/base/en/latest/ComponentReference.html>.
 > As a side-quest (maybe later after completing the tutorial, if you prefer),
 > I recommend you to take a look at this documentation
 > in order to discover some types and fields by yourself.
@@ -813,7 +813,7 @@ in order to add a few records:
 
 ℹ️ Note:
 > Please take some time to read that file from start to finish,
-> it is thoroughly commented (in an EPICS database file, the control character for comments is `#`)
+> it is thoroughly commented (the control character for comments is `#` in an EPICS database file)
 > in order to explain it as much as possible.
 > It will showcase some of the most common record types and record fields
 > which is probably the most important part of this tutorial.
@@ -937,7 +937,9 @@ record(ao, "workshop-example:calc-avg-test"){
 ```
 
 ℹ️ Side note:
-> At the end of every input link (e.g. `INP` field), output link (e.g. `OUT` field) and forward link (e.g. `FLNK` field),
+> At the end of every input link (e.g. `INP` field),
+> output link (e.g. `OUT` field)
+> and forward link (e.g. `FLNK` field),
 > you can add some link "options" in order to further specify inter-records behavior.
 >
 > Those link options might concern severity:
@@ -1359,7 +1361,7 @@ for more details about those record types.
 
 Let's create the following `.db` file
 (`/opt/epics/tops/workshopTop/workshopExampleApp/Db/workshopExampleForSubAndASub.db`)
-in order to showcase how to use a `sub` record and a `aSub` record:
+in order to showcase how to use a `sub` record and an `aSub` record:
 
 ```console
 record(ai,"workshop-example:ai-for-sub-asub-example")
@@ -1711,7 +1713,7 @@ Asyn is now properly imported!
 
 As an other example,
 let's import [StreamDevice](https://paulscherrerinstitute.github.io/StreamDevice/)
-which is also a top (Asyn-based),
+which is also a Top (Asyn-based),
 and allow your IOC to communicate with your device,
 if your device use any string based communication protocol.
 
@@ -1798,7 +1800,7 @@ in order to add the following:
   workshopExample_DBD += drvAsynIPPort.dbd
   workshopExample_DBD += drvAsynSerialPort.dbd
   #workshopExample_DBD += drv<...>.dbd
-  workshopExample_DBD += stream.dbd
++ workshopExample_DBD += stream.dbd
 
   # Add all the support libraries needed by this IOC
   #workshopExample_LIBS += xxx
@@ -1827,7 +1829,7 @@ StreamDevice is now properly imported!
 ℹ️ Note:
 > By “allowing his own Top to be imported,”
 > I mean the ability to generate a library that allows you to reuse the code from your Top.
-> This is the recommended best practice when you want to call a Top from another.
+> This is the recommended best practice when you want to call a Top from another one.
 
 When you create a Top,
 the logic described in its App(s) is not "exportable" by default.
@@ -1939,7 +1941,7 @@ make clean && make && echo OK || echo KO
 ```
 
 Now, if you check the `lib` folder of your Top,
-you some new files (libraries) in it:
+you will find some new files (libraries) in it:
 
 ```bash
 cd /opt/epics/tops/workshopTop
@@ -1951,7 +1953,7 @@ tree lib
       └── libworkshopExampleSupport.so
 ```
 
-You Top can now properly be exported/imported!
+Your Top can now properly be exported/imported!
 
 ℹ️ Note:
 > If your Top has no App but just a Sup directory
@@ -2070,11 +2072,15 @@ or CA servers (if using the CA communication protocol).
 
 🚧 TODO 🚧 troubleshooting guide in separate .md file
 
-### How to overcharge a record
+### Macros with default values
+
+🚧 TODO 🚧 e.g. `${MY-DEFAULT-MACRO=1234}`
+
+### How to overcharge a record?
 
 🚧 TODO 🚧 Using the `*` record "type"
 
-### How to use StreamDevice
+### How to use StreamDevice?
 
 🚧 TODO 🚧
 
